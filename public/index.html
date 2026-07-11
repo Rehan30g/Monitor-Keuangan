@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitor Keuangan Aldrick - Huzky.xyz</title>
+  <meta name="description" content="Monitor keuangan pribadi Aldrick.">
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Ditampilkan sebelum login -->
+  <div id="gate-wrap" class="gate-wrap">
+    <div class="auth-main">
+      <section id="gate-panel" class="container">
+        <div class="auth-brand">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M16 15h2"/></svg>
+          Huzky.xyz
+        </div>
+        <h1>Monitor Keuangan</h1>
+        <p class="auth-sub">Dasbor keuangan pribadi milik Aldrick. Silakan login untuk melihat ringkasan saldo, pemasukan, dan pengeluaran.</p>
+        <div class="action-panel">
+          <a href="/login"><button type="button">Login</button></a>
+          <a href="/register"><button type="button" class="btn-secondary">Daftar</button></a>
+        </div>
+      </section>
+    </div>
+    <footer><p>&copy; 2026 Huzky.xyz</p></footer>
+  </div>
+
+  <!-- Aplikasi (setelah login) -->
+  <div id="app" class="app">
+
+    <aside class="sidebar">
+      <div class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M16 15h2"/></svg>
+        Monitor Keuangan
+      </div>
+      <nav aria-label="Navigasi utama">
+        <button class="nav-item is-active" data-tab="ringkasan">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+          <span>Ringkasan</span>
+        </button>
+        <button class="nav-item" data-tab="transaksi">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v13"/><path d="M4 14l3 3 3-3"/><path d="M17 20V7"/><path d="M14 10l3-3 3 3"/></svg>
+          <span>Transaksi</span>
+        </button>
+        <button class="nav-item" data-tab="laporan">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/></svg>
+          <span>Laporan</span>
+        </button>
+        <button class="nav-item" data-tab="pengaturan">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h10"/><circle cx="17" cy="8" r="2.5"/><path d="M20 16H10"/><circle cx="7" cy="16" r="2.5"/></svg>
+          <span>Pengaturan</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+          <span id="sidebar-username">&nbsp;</span>
+        </div>
+        <button id="btn-logout" class="nav-item">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <div>
+      <header class="mobile-header">
+        <div class="brand">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M16 15h2"/></svg>
+          Monitor Keuangan
+        </div>
+        <span id="mobile-username"></span>
+      </header>
+
+      <main class="main">
+
+        <!-- ===================== Ringkasan ===================== -->
+        <section class="tab is-active" id="tab-ringkasan">
+          <div class="page-head">
+            <h2>Ringkasan</h2>
+            <p id="greeting">Halo.</p>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-tile">
+              <span class="stat-label">Saldo</span>
+              <span class="stat-value" id="ringkasan-saldo">Rp 0</span>
+              <span class="stat-sub" id="saldo-sub">&nbsp;</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label"><span class="stat-key key-income"></span>Total pemasukan</span>
+              <span class="stat-value" id="ringkasan-masuk">Rp 0</span>
+              <span class="stat-sub" id="masuk-sub">&nbsp;</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label"><span class="stat-key key-expense"></span>Total pengeluaran</span>
+              <span class="stat-value" id="ringkasan-keluar">Rp 0</span>
+              <span class="stat-sub" id="keluar-sub">&nbsp;</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Tren saldo</h3>
+              <span class="card-note">Saldo kumulatif per hari</span>
+            </div>
+            <div class="chart-wrap" id="chart-trend"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Transaksi terbaru</h3>
+              <a href="#" class="link-more" id="link-semua-transaksi">Lihat semua</a>
+            </div>
+            <ul class="recent-list" id="recent-list"></ul>
+          </div>
+        </section>
+
+        <!-- ===================== Transaksi ===================== -->
+        <section class="tab" id="tab-transaksi">
+          <div class="page-head">
+            <h2>Transaksi</h2>
+            <p>Catat dan kelola seluruh pemasukan &amp; pengeluaran.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h3>Tambah transaksi</h3></div>
+            <form id="form-transaksi" class="tx-form">
+              <div class="form-group">
+                <label for="tx-jenis">Jenis</label>
+                <select id="tx-jenis" name="jenis">
+                  <option value="masuk">Pemasukan</option>
+                  <option value="keluar">Pengeluaran</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="tx-keterangan">Keterangan</label>
+                <input type="text" id="tx-keterangan" name="keterangan" placeholder="contoh: Gaji, Belanja" maxlength="120">
+              </div>
+              <div class="form-group">
+                <label for="tx-jumlah">Jumlah (Rp)</label>
+                <input type="text" id="tx-jumlah" name="jumlah" placeholder="50.000" inputmode="numeric" required>
+              </div>
+              <button type="submit">Tambah</button>
+            </form>
+            <div id="pesan-error" class="form-msg" role="status"></div>
+          </div>
+
+          <div class="card">
+            <div class="tx-toolbar">
+              <div class="search-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                <input type="search" id="tx-search" placeholder="Cari keterangan&hellip;" aria-label="Cari transaksi">
+              </div>
+              <div class="segmented" role="group" aria-label="Filter jenis">
+                <button type="button" class="is-active" data-filter="semua">Semua</button>
+                <button type="button" data-filter="masuk">Pemasukan</button>
+                <button type="button" data-filter="keluar">Pengeluaran</button>
+              </div>
+            </div>
+            <p class="tx-count" id="tx-count"></p>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Waktu</th>
+                    <th>Jenis</th>
+                    <th>Keterangan</th>
+                    <th class="num">Jumlah</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="tabel-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== Laporan ===================== -->
+        <section class="tab" id="tab-laporan">
+          <div class="page-head">
+            <h2>Laporan</h2>
+            <p>Rekap bulanan dihitung dari riwayat transaksi.</p>
+          </div>
+
+          <div class="laporan-grid">
+            <div class="stat-tile">
+              <span class="stat-label"><span class="stat-key key-income"></span>Rata-rata pemasukan / bulan</span>
+              <span class="stat-value" id="lap-avg-masuk">Rp 0</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label"><span class="stat-key key-expense"></span>Rata-rata pengeluaran / bulan</span>
+              <span class="stat-value" id="lap-avg-keluar">Rp 0</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label">Transaksi terbesar</span>
+              <span class="stat-value" id="lap-terbesar">Rp 0</span>
+              <span class="stat-sub" id="lap-terbesar-sub">&nbsp;</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Pemasukan vs pengeluaran per bulan</h3>
+              <ul class="chart-legend">
+                <li><span class="legend-swatch swatch-income"></span>Pemasukan</li>
+                <li><span class="legend-swatch swatch-expense"></span>Pengeluaran</li>
+              </ul>
+            </div>
+            <div class="chart-wrap" id="chart-bulanan"></div>
+            <details class="table-view">
+              <summary>Tampilkan sebagai tabel</summary>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Bulan</th>
+                      <th class="num">Pemasukan</th>
+                      <th class="num">Pengeluaran</th>
+                      <th class="num">Selisih</th>
+                    </tr>
+                  </thead>
+                  <tbody id="lap-tabel-body"></tbody>
+                </table>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <!-- ===================== Pengaturan ===================== -->
+        <section class="tab" id="tab-pengaturan">
+          <div class="page-head">
+            <h2>Pengaturan</h2>
+            <p>Akun dan preferensi tampilan.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h3>Tampilan</h3></div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Tema</div>
+                <div class="settings-desc">"Sistem" mengikuti pengaturan perangkat.</div>
+              </div>
+              <div class="segmented" role="group" aria-label="Pilih tema">
+                <button type="button" data-theme-choice="light">Terang</button>
+                <button type="button" data-theme-choice="dark">Gelap</button>
+                <button type="button" data-theme-choice="system">Sistem</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h3>Akun</h3></div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Username</div>
+                <div class="settings-desc">Akun yang sedang login.</div>
+              </div>
+              <span class="settings-value" id="setting-username">&ndash;</span>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Jumlah transaksi tercatat</div>
+              </div>
+              <span class="settings-value" id="setting-tx-count">0</span>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Sesi</div>
+                <div class="settings-desc">Keluar dari akun di perangkat ini.</div>
+              </div>
+              <button type="button" id="btn-logout-settings" class="btn-danger">Logout</button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <nav class="tabbar" aria-label="Navigasi bawah">
+        <button class="nav-item is-active" data-tab="ringkasan">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+          <span>Ringkasan</span>
+        </button>
+        <button class="nav-item" data-tab="transaksi">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v13"/><path d="M4 14l3 3 3-3"/><path d="M17 20V7"/><path d="M14 10l3-3 3 3"/></svg>
+          <span>Transaksi</span>
+        </button>
+        <button class="nav-item" data-tab="laporan">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/></svg>
+          <span>Laporan</span>
+        </button>
+        <button class="nav-item" data-tab="pengaturan">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h10"/><circle cx="17" cy="8" r="2.5"/><path d="M20 16H10"/><circle cx="7" cy="16" r="2.5"/></svg>
+          <span>Pengaturan</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
