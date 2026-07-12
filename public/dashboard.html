@@ -336,6 +336,30 @@
 
           <!-- Sub-tab: Autentikasi -->
           <div class="subtab-panel" id="subtab-autentikasi">
+
+          <!-- Verifikasi dua langkah (TOTP / 2FA) -->
+          <div class="card" id="card-mfa">
+            <div class="card-head"><h3 data-i18n="set.mfaTitle">Verifikasi dua langkah</h3></div>
+            <p class="settings-desc mcp-intro" data-i18n="set.mfaDesc">Tambahkan lapisan keamanan: saat login kamu perlu kode dari aplikasi authenticator (Google Authenticator, Authy, 1Password, dll).</p>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label" data-i18n="set.mfaStatusLabel">Status</div>
+                <div class="settings-desc" id="mfa-status-desc" data-i18n="set.mfaChecking">Memeriksa status&hellip;</div>
+              </div>
+              <div class="settings-inline">
+                <button type="button" class="btn-secondary" id="btn-mfa-enable" hidden data-i18n="set.mfaAktifkan">Aktifkan</button>
+                <button type="button" class="btn-danger" id="btn-mfa-disable" hidden data-i18n="set.mfaNonaktifkan">Nonaktifkan</button>
+              </div>
+            </div>
+            <div class="settings-row" id="mfa-backup-row" hidden>
+              <div>
+                <div class="settings-label" data-i18n="set.mfaBackupLabel">Kode cadangan</div>
+                <div class="settings-desc" id="mfa-backup-desc" data-i18n="set.mfaBackupDesc">Dipakai untuk masuk jika kehilangan akses ke aplikasi authenticator.</div>
+              </div>
+              <button type="button" class="btn-secondary" id="btn-mfa-regen" data-i18n="set.mfaBuatUlang">Buat ulang kode cadangan</button>
+            </div>
+          </div>
+
           <div class="card">
             <div class="card-head"><h3>Telegram</h3></div>
             <div class="settings-row">
@@ -599,6 +623,128 @@
           <div class="cf-actions">
             <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
             <button type="button" class="btn-danger" id="btn-pat-cabut-confirm" data-i18n="set.patCabutBtn">Cabut token</button>
+          </div>
+        </div>
+
+        <!-- MFA: langkah 1 aktivasi — verifikasi ulang password -->
+        <div class="cf-sheet" id="cf-mfa-enable" role="dialog" aria-modal="true" aria-labelledby="cf-mfa-enable-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-mfa-enable-title" data-i18n="set.mfaAktifkanTitle">Aktifkan verifikasi dua langkah</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <form id="form-mfa-enable" class="tx-form">
+            <p class="cf-desc" data-i18n="set.mfaEnableMsg">Masukkan password kamu untuk mulai mengaktifkan verifikasi dua langkah.</p>
+            <div class="form-group">
+              <label for="mfa-enable-password" data-i18n="set.pwSaatIni">Password saat ini</label>
+              <input type="password" id="mfa-enable-password" name="currentPassword" autocomplete="current-password" required>
+            </div>
+            <div class="cf-actions">
+              <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+              <button type="submit" data-i18n="set.mfaLanjut">Lanjutkan</button>
+            </div>
+          </form>
+          <p id="mfa-enable-msg" class="form-msg" role="status"></p>
+        </div>
+
+        <!-- MFA: langkah 2 aktivasi — tampilkan secret + kode cadangan, konfirmasi kode TOTP -->
+        <div class="cf-sheet" id="cf-mfa-setup" role="dialog" aria-modal="true" aria-labelledby="cf-mfa-setup-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-mfa-setup-title" data-i18n="set.mfaSetupTitle">Siapkan authenticator</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <p class="cf-desc" data-i18n="set.mfaSetupStep1">Di aplikasi authenticator kamu, pilih "masukkan kunci setup manual", lalu tempel kunci ini:</p>
+          <div class="pat-reveal-box">
+            <code id="mfa-secret-value">XXXXXXXX</code>
+            <button type="button" class="btn-secondary" id="btn-mfa-secret-copy" data-i18n="set.patSalin">Salin</button>
+          </div>
+          <p class="settings-desc mfa-uri-label" data-i18n="set.mfaUriLabel">Atau salin URI otpauth lengkap:</p>
+          <div class="pat-reveal-box">
+            <code id="mfa-uri-value">otpauth://</code>
+            <button type="button" class="btn-secondary" id="btn-mfa-uri-copy" data-i18n="set.patSalin">Salin</button>
+          </div>
+          <p class="cf-desc cf-desc-warn" data-i18n="set.mfaBackupWarn">Simpan kode cadangan ini di tempat aman — hanya ditampilkan sekali ini. Tiap kode bisa dipakai sekali untuk masuk jika kamu kehilangan akses ke authenticator.</p>
+          <ul class="mfa-backup-list" id="mfa-setup-backup-list"></ul>
+          <button type="button" class="btn-secondary mfa-backup-copy-btn" id="btn-mfa-setup-backup-copy" data-i18n="set.mfaSalinKode">Salin semua kode</button>
+          <form id="form-mfa-confirm" class="tx-form mfa-confirm-form">
+            <p class="cf-desc" data-i18n="set.mfaConfirmMsg">Untuk memastikan authenticator sudah benar, masukkan kode 6 digit yang muncul sekarang:</p>
+            <div class="form-group">
+              <label for="mfa-confirm-code" data-i18n="set.mfaCodeLabel">Kode dari authenticator</label>
+              <input type="text" id="mfa-confirm-code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
+            </div>
+            <div class="cf-actions">
+              <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+              <button type="submit" data-i18n="set.mfaVerifikasiAktifkan">Verifikasi &amp; aktifkan</button>
+            </div>
+          </form>
+          <p id="mfa-setup-msg" class="form-msg" role="status" aria-live="polite"></p>
+        </div>
+
+        <!-- MFA: nonaktifkan — butuh password DAN kode -->
+        <div class="cf-sheet cf-danger" id="cf-mfa-disable" role="dialog" aria-modal="true" aria-labelledby="cf-mfa-disable-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-mfa-disable-title" data-i18n="set.mfaNonaktifkanTitle">Nonaktifkan verifikasi dua langkah</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <form id="form-mfa-disable" class="tx-form">
+            <p class="cf-desc" data-i18n="set.mfaDisableMsg">Untuk mematikan verifikasi dua langkah, konfirmasi dengan password dan satu kode dari authenticator (atau kode cadangan).</p>
+            <div class="form-group">
+              <label for="mfa-disable-password" data-i18n="set.pwSaatIni">Password saat ini</label>
+              <input type="password" id="mfa-disable-password" name="currentPassword" autocomplete="current-password" required>
+            </div>
+            <div class="form-group">
+              <label for="mfa-disable-code" data-i18n="set.mfaCodeOrBackupLabel">Kode authenticator atau kode cadangan</label>
+              <input type="text" id="mfa-disable-code" name="code" autocomplete="one-time-code" required>
+            </div>
+            <div class="cf-actions">
+              <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+              <button type="submit" class="btn-danger" data-i18n="set.mfaNonaktifkan">Nonaktifkan</button>
+            </div>
+          </form>
+          <p id="mfa-disable-msg" class="form-msg" role="status"></p>
+        </div>
+
+        <!-- MFA: buat ulang kode cadangan — butuh password -->
+        <div class="cf-sheet" id="cf-mfa-regen" role="dialog" aria-modal="true" aria-labelledby="cf-mfa-regen-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-mfa-regen-title" data-i18n="set.mfaBuatUlangTitle">Buat ulang kode cadangan</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <form id="form-mfa-regen" class="tx-form">
+            <p class="cf-desc" data-i18n="set.mfaRegenMsg">Membuat kode cadangan baru akan membatalkan semua kode cadangan lama. Masukkan password untuk melanjutkan.</p>
+            <div class="form-group">
+              <label for="mfa-regen-password" data-i18n="set.pwSaatIni">Password saat ini</label>
+              <input type="password" id="mfa-regen-password" name="currentPassword" autocomplete="current-password" required>
+            </div>
+            <div class="cf-actions">
+              <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+              <button type="submit" data-i18n="set.mfaBuatUlang">Buat ulang kode cadangan</button>
+            </div>
+          </form>
+          <p id="mfa-regen-msg" class="form-msg" role="status"></p>
+        </div>
+
+        <!-- MFA: tampilkan kode cadangan baru (sekali) -->
+        <div class="cf-sheet" id="cf-mfa-backup-reveal" role="dialog" aria-modal="true" aria-labelledby="cf-mfa-backup-reveal-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-mfa-backup-reveal-title" data-i18n="set.mfaBackupTitle">Kode cadangan baru</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <p class="cf-desc cf-desc-warn" data-i18n="set.mfaBackupWarn">Simpan kode cadangan ini di tempat aman — hanya ditampilkan sekali ini. Tiap kode bisa dipakai sekali untuk masuk jika kamu kehilangan akses ke authenticator.</p>
+          <ul class="mfa-backup-list" id="mfa-reveal-backup-list"></ul>
+          <button type="button" class="btn-secondary mfa-backup-copy-btn" id="btn-mfa-reveal-backup-copy" data-i18n="set.mfaSalinKode">Salin semua kode</button>
+          <p id="mfa-backup-copy-msg" class="form-msg" role="status" aria-live="polite"></p>
+          <div class="cf-actions">
+            <button type="button" data-cf-close data-i18n="set.patSelesai">Selesai, sudah disimpan</button>
           </div>
         </div>
 

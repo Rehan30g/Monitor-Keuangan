@@ -907,6 +907,230 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ------------------------------------------------------------------
+  // MFA / verifikasi dua langkah (TOTP)
+  // ------------------------------------------------------------------
+  let mfaState = { enabled: false, backupCodesRemaining: 0 };
+  let mfaEnroll = { secret: '', otpauthUri: '', backupCodes: [] }; // sementara, saat enroll
+
+  function renderMfaStatus() {
+    const desc = document.getElementById('mfa-status-desc');
+    const btnEnable = document.getElementById('btn-mfa-enable');
+    const btnDisable = document.getElementById('btn-mfa-disable');
+    const backupRow = document.getElementById('mfa-backup-row');
+    const backupDesc = document.getElementById('mfa-backup-desc');
+    if (!desc) return;
+    desc.removeAttribute('data-i18n');
+    if (mfaState.enabled) {
+      desc.textContent = window.t('set.mfaAktif');
+      btnEnable.hidden = true;
+      btnDisable.hidden = false;
+      backupRow.hidden = false;
+      backupDesc.removeAttribute('data-i18n');
+      backupDesc.textContent = window.t('set.mfaBackupSisa', { n: mfaState.backupCodesRemaining });
+    } else {
+      desc.textContent = window.t('set.mfaTidakAktif');
+      btnEnable.hidden = false;
+      btnDisable.hidden = true;
+      backupRow.hidden = true;
+    }
+  }
+
+  async function loadMfaStatus() {
+    try {
+      const response = await fetch('/api/mfa/status', { credentials: 'same-origin' });
+      const data = await response.json();
+      mfaState = {
+        enabled: Boolean(data.enabled),
+        backupCodesRemaining: data.backupCodesRemaining || 0
+      };
+    } catch (err) {
+      console.error('Gagal memuat status MFA:', err);
+    }
+    renderMfaStatus();
+  }
+
+  function renderMfaBackupCodes(ulId, codes) {
+    const ul = document.getElementById(ulId);
+    if (!ul) return;
+    ul.innerHTML = '';
+    codes.forEach((c) => {
+      const li = document.createElement('li');
+      li.textContent = c;
+      ul.appendChild(li);
+    });
+  }
+
+  // Salin teks lalu beri umpan balik singkat pada tombol (pola sama dgn MCP URL).
+  async function salinKeClipboard(text, btn) {
+    const original = btn.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = window.t('set.patTersalinSingkat');
+    } catch (err) {
+      btn.textContent = window.t('set.patGagalSalin');
+    }
+    setTimeout(() => { btn.textContent = original; }, 1600);
+  }
+
+  // Aktifkan — langkah 1: minta password
+  document.getElementById('btn-mfa-enable').addEventListener('click', () => {
+    document.getElementById('form-mfa-enable').reset();
+    document.getElementById('mfa-enable-msg').textContent = '';
+    document.getElementById('mfa-enable-msg').className = 'form-msg';
+    bukaKonfirmasi('cf-mfa-enable', '#mfa-enable-password');
+  });
+
+  document.getElementById('form-mfa-enable').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msgEl = document.getElementById('mfa-enable-msg');
+    msgEl.textContent = '';
+    msgEl.className = 'form-msg';
+    const currentPassword = document.getElementById('mfa-enable-password').value;
+    try {
+      const response = await fetch('/api/mfa/enable/start', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        msgEl.textContent = data.error ? window.tServer(data.error) : window.t('set.mfaGagal');
+        msgEl.className = 'form-msg is-error';
+        return;
+      }
+      mfaEnroll = { secret: data.secret, otpauthUri: data.otpauthUri, backupCodes: data.backupCodes };
+      document.getElementById('mfa-secret-value').textContent = data.secret;
+      document.getElementById('mfa-uri-value').textContent = data.otpauthUri;
+      renderMfaBackupCodes('mfa-setup-backup-list', data.backupCodes);
+      document.getElementById('form-mfa-confirm').reset();
+      document.getElementById('mfa-setup-msg').textContent = '';
+      document.getElementById('mfa-setup-msg').className = 'form-msg';
+      bukaKonfirmasi('cf-mfa-setup', '#mfa-confirm-code');
+    } catch (err) {
+      msgEl.textContent = window.t('set.mfaGagal');
+      msgEl.className = 'form-msg is-error';
+    }
+  });
+
+  document.getElementById('btn-mfa-secret-copy').addEventListener('click', (e) => {
+    salinKeClipboard(mfaEnroll.secret, e.currentTarget);
+  });
+  document.getElementById('btn-mfa-uri-copy').addEventListener('click', (e) => {
+    salinKeClipboard(mfaEnroll.otpauthUri, e.currentTarget);
+  });
+  document.getElementById('btn-mfa-setup-backup-copy').addEventListener('click', (e) => {
+    salinKeClipboard(mfaEnroll.backupCodes.join('\n'), e.currentTarget);
+  });
+
+  // Aktifkan — langkah 2: konfirmasi kode TOTP → enabled
+  document.getElementById('form-mfa-confirm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msgEl = document.getElementById('mfa-setup-msg');
+    msgEl.textContent = '';
+    msgEl.className = 'form-msg';
+    const code = document.getElementById('mfa-confirm-code').value.trim();
+    try {
+      const response = await fetch('/api/mfa/enable/confirm', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        msgEl.textContent = data.error ? window.tServer(data.error) : window.t('set.mfaGagal');
+        msgEl.className = 'form-msg is-error';
+        return;
+      }
+      mfaEnroll = { secret: '', otpauthUri: '', backupCodes: [] };
+      tutupKonfirmasi();
+      loadMfaStatus();
+    } catch (err) {
+      msgEl.textContent = window.t('set.mfaGagal');
+      msgEl.className = 'form-msg is-error';
+    }
+  });
+
+  // Nonaktifkan — password + kode
+  document.getElementById('btn-mfa-disable').addEventListener('click', () => {
+    document.getElementById('form-mfa-disable').reset();
+    document.getElementById('mfa-disable-msg').textContent = '';
+    document.getElementById('mfa-disable-msg').className = 'form-msg';
+    bukaKonfirmasi('cf-mfa-disable', '#mfa-disable-password');
+  });
+
+  document.getElementById('form-mfa-disable').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msgEl = document.getElementById('mfa-disable-msg');
+    msgEl.textContent = '';
+    msgEl.className = 'form-msg';
+    const currentPassword = document.getElementById('mfa-disable-password').value;
+    const code = document.getElementById('mfa-disable-code').value.trim();
+    try {
+      const response = await fetch('/api/mfa/disable', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, code })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        msgEl.textContent = data.error ? window.tServer(data.error) : window.t('set.mfaGagal');
+        msgEl.className = 'form-msg is-error';
+        return;
+      }
+      tutupKonfirmasi();
+      loadMfaStatus();
+    } catch (err) {
+      msgEl.textContent = window.t('set.mfaGagal');
+      msgEl.className = 'form-msg is-error';
+    }
+  });
+
+  // Buat ulang kode cadangan — password
+  document.getElementById('btn-mfa-regen').addEventListener('click', () => {
+    document.getElementById('form-mfa-regen').reset();
+    document.getElementById('mfa-regen-msg').textContent = '';
+    document.getElementById('mfa-regen-msg').className = 'form-msg';
+    bukaKonfirmasi('cf-mfa-regen', '#mfa-regen-password');
+  });
+
+  document.getElementById('form-mfa-regen').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msgEl = document.getElementById('mfa-regen-msg');
+    msgEl.textContent = '';
+    msgEl.className = 'form-msg';
+    const currentPassword = document.getElementById('mfa-regen-password').value;
+    try {
+      const response = await fetch('/api/mfa/backup-codes', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        msgEl.textContent = data.error ? window.tServer(data.error) : window.t('set.mfaGagal');
+        msgEl.className = 'form-msg is-error';
+        return;
+      }
+      mfaEnroll.backupCodes = data.backupCodes;
+      renderMfaBackupCodes('mfa-reveal-backup-list', data.backupCodes);
+      document.getElementById('mfa-backup-copy-msg').textContent = '';
+      bukaKonfirmasi('cf-mfa-backup-reveal');
+      loadMfaStatus();
+    } catch (err) {
+      msgEl.textContent = window.t('set.mfaGagal');
+      msgEl.className = 'form-msg is-error';
+    }
+  });
+
+  document.getElementById('btn-mfa-reveal-backup-copy').addEventListener('click', (e) => {
+    salinKeClipboard(mfaEnroll.backupCodes.join('\n'), e.currentTarget);
+  });
+
   let namaTampilan = null; // nama untuk sapaan; cache untuk ganti bahasa
 
   function terapkanSapaan() {
@@ -935,6 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadTelegramBotLink();
         loadTelegramStatus();
         loadPatTokens();
+        loadMfaStatus();
       } else {
         window.location.href = '/login';
       }
@@ -1471,6 +1696,7 @@ document.addEventListener('DOMContentLoaded', () => {
     terapkanSapaan();
     renderTelegramStatus();
     renderPatList();
+    renderMfaStatus();
     if (appData) renderAll(appData); // tabel, statistik, chart, nama bulan
   });
 
