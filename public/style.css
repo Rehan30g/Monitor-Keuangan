@@ -262,6 +262,46 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   color: var(--ink-2);
 }
 
+/* Pemisah "atau" antara form password & tombol Google */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  font-size: 0.8rem;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+}
+
+/* Tombol "Masuk dengan Google" — logo G resmi inline (tanpa aset eksternal) */
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.google-btn:hover { background: var(--surface-2); border-color: var(--ink-2); }
+.google-btn svg { flex-shrink: 0; }
+
 /* Halaman hubungkan Telegram: avatar user ↔ badge Telegram */
 .link-visual {
   display: flex;
@@ -434,6 +474,15 @@ footer {
   font-weight: 500;
 }
 .nav-item.is-active svg { color: var(--accent); }
+.nav-item[hidden] { display: none; } /* display:flex di atas mengalahkan [hidden] bawaan */
+
+/* Tab admin: hanya boleh nongol di sidebar desktop, dan hanya untuk admin
+   (JS mengatur atribut hidden berdasar role). Rule ini pengaman tambahan
+   supaya #nav-admin-link tidak pernah tampil di bawah breakpoint desktop,
+   apa pun state JS-nya. */
+@media (max-width: 959px) {
+  #nav-admin-link { display: none !important; }
+}
 
 @media (hover: hover) and (pointer: fine) {
   .nav-item:hover { background: var(--surface-2); border-color: transparent; color: var(--ink); }
@@ -658,6 +707,28 @@ footer {
   }
   .mobile-header, .tabbar { display: none; }
   .main { padding: 28px 32px 40px; }
+
+  /* Scrollbar custom, tipis & senada dengan palet halaman (track menyatu ke
+     bg, thumb pakai warna hairline yang sama dipakai untuk border tipis di
+     seluruh UI — jadi kelihatan pas dipakai, tapi tidak mencolok saat diam).
+     scrollbar-gutter: stable mencadangkan lebar space-nya secara konsisten,
+     supaya .main yang di-center dengan margin:auto tidak geser antara
+     halaman yang kontennya lebih pendek dari viewport (tak perlu scroll) vs
+     yang lebih panjang (perlu scroll). Hanya berlaku desktop (di dalam
+     media query ini) — mobile pakai scrollbar bawaan OS seperti biasa. */
+  html {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: var(--hairline) var(--bg); /* Firefox: thumb track */
+  }
+  html::-webkit-scrollbar { width: 10px; }
+  html::-webkit-scrollbar-track { background: var(--bg); }
+  html::-webkit-scrollbar-thumb {
+    background: var(--hairline);
+    border-radius: 8px;
+    border: 2px solid var(--bg);
+  }
+  html::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 }
 
 /* ==========================================================================

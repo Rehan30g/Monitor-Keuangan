@@ -95,7 +95,7 @@ async function handleFinanceMessage(chatId, userId, messageId, { text, imageBase
   const failed = [];
 
   for (const call of result.toolCalls) {
-    const outcome = addTransaction(userId, call.jenis, call.keterangan, call.jumlah);
+    const outcome = addTransaction(userId, call.jenis, call.keterangan, call.jumlah, { sessionLabel: 'telegram:' + chatId });
     if (outcome.error) {
       failed.push(`${call.keterangan}: ${outcome.error}`);
     } else {

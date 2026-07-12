@@ -908,6 +908,90 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ------------------------------------------------------------------
+  // Aplikasi terhubung lewat OAuth (koneksi web mis. Claude.ai)
+  // ------------------------------------------------------------------
+  let mcpConnCabutId = null;
+
+  function renderMcpConnList(connections) {
+    const listEl = document.getElementById('mcp-conn-list');
+    const emptyEl = document.getElementById('mcp-conn-empty');
+    listEl.innerHTML = '';
+    if (!connections || connections.length === 0) {
+      listEl.hidden = true;
+      emptyEl.hidden = false;
+      return;
+    }
+    listEl.hidden = false;
+    emptyEl.hidden = true;
+    connections.forEach((conn) => {
+      const li = document.createElement('li');
+      li.className = 'pat-row';
+      const info = document.createElement('div');
+      info.className = 'pat-row-info';
+      const label = document.createElement('div');
+      label.className = 'pat-row-label';
+      label.textContent = conn.clientName;
+      const meta = document.createElement('div');
+      meta.className = 'pat-row-meta';
+      meta.textContent = window.t('set.mcpConnMeta', {
+        sejak: formatWaktuPat(conn.connectedSince),
+        dipakai: conn.lastUsedAt ? formatWaktuPat(conn.lastUsedAt) : window.t('set.mcpConnBelumDipakai')
+      });
+      info.appendChild(label);
+      info.appendChild(meta);
+      const btnCabut = document.createElement('button');
+      btnCabut.type = 'button';
+      btnCabut.className = 'pat-row-revoke';
+      btnCabut.textContent = window.t('set.mcpConnCabut');
+      btnCabut.addEventListener('click', () => {
+        mcpConnCabutId = conn.clientId;
+        document.getElementById('mcp-conn-cabut-msg').textContent = window.t('set.mcpConnCabutMsg', { nama: conn.clientName });
+        bukaKonfirmasi('cf-mcp-conn-cabut');
+      });
+      li.appendChild(info);
+      li.appendChild(btnCabut);
+      listEl.appendChild(li);
+    });
+  }
+
+  async function loadMcpConnections() {
+    let connections = [];
+    try {
+      const response = await fetch('/api/mcp/connections', { credentials: 'same-origin' });
+      const data = await response.json();
+      connections = Array.isArray(data.connections) ? data.connections : [];
+    } catch (err) {
+      console.error('Gagal memuat daftar aplikasi terhubung:', err);
+    }
+    renderMcpConnList(connections);
+  }
+
+  const btnMcpConnLihat = document.getElementById('btn-mcp-conn-lihat');
+  if (btnMcpConnLihat) {
+    btnMcpConnLihat.addEventListener('click', () => {
+      bukaKonfirmasi('cf-mcp-conn');
+      loadMcpConnections();
+    });
+  }
+
+  document.getElementById('btn-mcp-conn-cabut-confirm').addEventListener('click', async () => {
+    if (!mcpConnCabutId) return;
+    const btn = document.getElementById('btn-mcp-conn-cabut-confirm');
+    btn.disabled = true;
+    try {
+      await fetch('/api/mcp/connections/' + encodeURIComponent(mcpConnCabutId) + '/revoke', {
+        method: 'POST',
+        credentials: 'same-origin'
+      });
+    } finally {
+      btn.disabled = false;
+      mcpConnCabutId = null;
+      bukaKonfirmasi('cf-mcp-conn');
+      loadMcpConnections();
+    }
+  });
+
+  // ------------------------------------------------------------------
   // MFA / verifikasi dua langkah (TOTP)
   // ------------------------------------------------------------------
   let mfaState = { enabled: false, backupCodesRemaining: 0 };
@@ -1132,6 +1216,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   let namaTampilan = null; // nama untuk sapaan; cache untuk ganti bahasa
+  let usernameChangedAt = null; // timestamp ganti username terakhir (cooldown)
+  const USERNAME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
 
   function terapkanSapaan() {
     if (!namaTampilan) return;
@@ -1150,7 +1236,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json();
         namaTampilan = data.displayName || data.username;
         terapkanSapaan();
+        // Tautan panel admin hanya tampil untuk akun admin. Kontrol akses
+        // sebenarnya tetap di server pada tiap /api/admin/* — ini cuma pintasan.
+        const adminLink = document.getElementById('nav-admin-link');
+        if (adminLink && data.role === 'admin') adminLink.hidden = false;
         document.getElementById('setting-username').textContent = data.username;
+        usernameChangedAt = data.usernameChangedAt || null;
         if (data.email) tampilkanEmail(data.email);
         document.getElementById('profil-username').textContent = '@' + data.username;
         document.getElementById('nama-panggilan').value = data.displayName || '';
@@ -1602,6 +1693,85 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ------------------------------------------------------------------
+  // ------------------------------------------------------------------
+  // Ganti username: dibatasi sekali per 7 hari (cooldown). Bila cooldown
+  // masih aktif, input & tombol dinonaktifkan dengan pesan kapan bisa lagi.
+  // ------------------------------------------------------------------
+  const formUsernameGanti = document.getElementById('form-username-ganti');
+  const usernameMsg = document.getElementById('username-msg');
+  const usernameCooldownNote = document.getElementById('username-cooldown-note');
+  const usernameInput = document.getElementById('username-baru');
+  const usernameSubmitBtn = document.getElementById('btn-username-submit');
+
+  function fmtTanggal(ts) {
+    const lang = window.getLang ? window.getLang() : 'id';
+    const locale = lang === 'zh' ? 'zh-CN' : lang === 'en' ? 'en-US' : 'id-ID';
+    return new Date(ts).toLocaleString(locale, { dateStyle: 'long', timeStyle: 'short' });
+  }
+
+  function setUsernameMsg(text, ok) {
+    usernameMsg.textContent = text;
+    usernameMsg.className = 'form-msg' + (text ? (ok ? ' is-ok' : ' is-error') : '');
+  }
+
+  // Terapkan status cooldown ke UI (dipanggil saat membuka jendela & setelah
+  // menerima error username_cooldown dari server).
+  function terapkanUsernameCooldown(nextAllowedAt) {
+    if (nextAllowedAt && nextAllowedAt > Date.now()) {
+      usernameCooldownNote.hidden = false;
+      usernameCooldownNote.textContent = window.t('set.usernameCooldown', { d: fmtTanggal(nextAllowedAt) });
+      usernameInput.disabled = true;
+      usernameSubmitBtn.disabled = true;
+    } else {
+      usernameCooldownNote.hidden = true;
+      usernameCooldownNote.textContent = '';
+      usernameInput.disabled = false;
+      usernameSubmitBtn.disabled = false;
+    }
+  }
+
+  document.getElementById('btn-ganti-username').addEventListener('click', () => {
+    formUsernameGanti.reset();
+    setUsernameMsg('', true);
+    const nextAllowedAt = usernameChangedAt ? usernameChangedAt + USERNAME_COOLDOWN_MS : 0;
+    terapkanUsernameCooldown(nextAllowedAt);
+    bukaKonfirmasi('cf-username', '#username-baru');
+  });
+
+  formUsernameGanti.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setUsernameMsg('', true);
+    const newUsername = formUsernameGanti.newUsername.value.trim();
+    try {
+      const response = await fetch('/api/profile/username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newUsername })
+      });
+      const hasil = await response.json();
+      if (!response.ok || hasil.error) {
+        if (hasil.error === 'username_cooldown' && hasil.nextAllowedAt) {
+          usernameChangedAt = hasil.nextAllowedAt - USERNAME_COOLDOWN_MS;
+          terapkanUsernameCooldown(hasil.nextAllowedAt);
+          setUsernameMsg(window.t('set.usernameCooldown', { d: fmtTanggal(hasil.nextAllowedAt) }), false);
+          return;
+        }
+        setUsernameMsg(hasil.error ? window.tServer(hasil.error) : window.t('msg.err'), false);
+        return;
+      }
+      // Sukses: perbarui tampilan + timestamp cooldown lokal.
+      usernameChangedAt = Date.now();
+      if (hasil.username) {
+        document.getElementById('setting-username').textContent = hasil.username;
+        document.getElementById('profil-username').textContent = '@' + hasil.username;
+      }
+      tutupKonfirmasi();
+    } catch (err) {
+      console.error('Failed to change username:', err);
+      setUsernameMsg(window.t('msg.netFail'), false);
+    }
+  });
+
   // Ganti email: satu jendela (cf-email) dengan dua langkah internal —
   // form email+password → form kode 6 digit. verifyToken hidup di
   // variabel JS ini saja, tidak pernah ditaruh di DOM.

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title data-i18n="doc.admin">Panel Admin - UangKu</title>
+  <script src="theme.js"></script>
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .admin-shell { max-width: 1000px; margin: 0 auto; padding: 0 20px 64px; }
+    .admin-nav { border-bottom: 1px solid var(--hairline); background: var(--bg); position: sticky; top: 0; z-index: 5; }
+    .admin-nav-inner { max-width: 1000px; margin: 0 auto; padding: 0 20px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    .admin-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); }
+    .admin-brand svg { color: var(--accent); }
+    .admin-back { font-size: 0.9rem; color: var(--ink-2); }
+    .admin-hero { padding: 32px 0 8px; }
+    .admin-hero h1 { font-size: 1.6rem; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .admin-hero p { color: var(--ink-2); font-size: 0.95rem; }
+    .admin-pill { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--hairline); color: var(--ink-2); }
+    .admin-pill.is-admin { color: var(--accent); border-color: var(--accent); }
+    .admin-pill.is-deleted { color: var(--critical); border-color: var(--critical); }
+    .admin-yes { color: var(--accent); }
+    .admin-no { color: var(--ink-2); }
+    .admin-row-btn { cursor: pointer; }
+    .admin-detail-grid { display: grid; gap: 16px; }
+    .admin-detail-block h4 { font-size: 0.9rem; margin-bottom: 6px; }
+    .admin-detail-block ul { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: var(--ink-2); }
+    .admin-detail-block li { padding: 3px 0; border-bottom: 1px solid var(--hairline); }
+    .admin-detail-block li:last-child { border-bottom: none; }
+    .cf-sheet.admin-wide { max-width: 640px; width: calc(100vw - 32px); }
+    .admin-detail-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+    #admin-inline-msg { margin: 24px 0; }
+    .admin-mono { font-variant-numeric: tabular-nums; }
+    .admin-tx-sessions { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; }
+    .admin-tx-sessions li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--hairline); }
+    .admin-tx-sessions li:last-child { border-bottom: none; }
+    .admin-tx-src { font-weight: 600; color: var(--ink); }
+    .admin-tx-meta { color: var(--ink-2); font-size: 0.78rem; }
+    .admin-tx-spacer { flex: 1 1 auto; }
+    .admin-tx-range { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-top: 6px; }
+    .admin-tx-range label { display: flex; flex-direction: column; gap: 3px; font-size: 0.78rem; color: var(--ink-2); }
+    .admin-tx-range input { font: inherit; padding: 6px 8px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--bg); color: var(--ink); }
+  </style>
+</head>
+<body>
+  <nav class="admin-nav">
+    <div class="admin-nav-inner">
+      <span class="admin-brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z"/><path d="M9.5 12l2 2 3.5-4"/></svg>
+        <span data-i18n="admin.brand">Panel Admin</span>
+      </span>
+      <a class="admin-back" href="/dashboard" data-i18n="admin.back">← Kembali ke dashboard</a>
+    </div>
+  </nav>
+
+  <main class="admin-shell">
+    <div class="admin-hero">
+      <h1 data-i18n="admin.title">Panel Admin</h1>
+      <p data-i18n="admin.subtitle">Kelola pengguna, reset password, dan peran akun.</p>
+    </div>
+
+    <!-- Pesan inline: butuh 2FA / gagal muat -->
+    <div id="admin-inline-msg" class="card" hidden>
+      <p id="admin-inline-text" class="cf-desc" style="margin:0"></p>
+      <p style="margin-top:12px"><a class="admin-back" href="/dashboard" data-i18n="admin.goDashboard">← Ke dashboard</a></p>
+    </div>
+
+    <!-- Pesan status singkat setelah aksi -->
+    <p id="admin-toast" class="form-msg" role="status"></p>
+
+    <div class="card" id="admin-users-card" hidden>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="admin.thUser">Pengguna</th>
+              <th data-i18n="admin.thEmail">Email</th>
+              <th data-i18n="admin.thRole">Peran</th>
+              <th data-i18n="admin.thCreated">Dibuat</th>
+              <th data-i18n="admin.thVerified">Verifikasi</th>
+              <th data-i18n="admin.thMfa">2FA</th>
+              <th data-i18n="admin.thLastLogin">Login terakhir</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" id="admin-deleted-card" hidden style="margin-top:20px">
+      <h2 style="font-size:1.05rem; margin-bottom:4px" data-i18n="admin.deletedTitle">Akun terhapus (masih bisa dipulihkan)</h2>
+      <p class="cf-desc" style="margin:0 0 12px" data-i18n="admin.deletedSubtitle">Akun yang dihapus dalam 7 hari terakhir. Setelah masa tenggang, data dihapus permanen.</p>
+      <p id="admin-deleted-empty" class="cf-desc" hidden data-i18n="admin.noDeleted">Tidak ada akun terhapus.</p>
+      <div class="table-scroll" id="admin-deleted-scroll" hidden>
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="admin.thUser">Pengguna</th>
+              <th data-i18n="admin.thEmail">Email</th>
+              <th data-i18n="admin.thDeletedAt">Dihapus pada</th>
+              <th data-i18n="admin.thRemaining">Sisa waktu</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="admin-deleted-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Overlay bersama untuk semua sheet -->
+  <div class="tx-overlay" id="cf-overlay" hidden></div>
+
+  <!-- Sheet: detail pengguna -->
+  <div class="cf-sheet admin-wide" id="cf-detail" role="dialog" aria-modal="true" aria-labelledby="cf-detail-title" hidden>
+    <div class="tx-sheet-head">
+      <h3 id="cf-detail-title" data-i18n="admin.detailTitle">Detail pengguna</h3>
+      <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="admin.close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div id="cf-detail-body" class="admin-detail-grid"></div>
+    <div class="cf-actions admin-detail-actions">
+      <button type="button" class="btn-secondary" id="btn-detail-reset" data-i18n="admin.resetPw">Reset password</button>
+      <button type="button" class="btn-secondary" id="btn-detail-role"></button>
+      <button type="button" class="btn-secondary" id="btn-detail-username-cd" data-i18n="admin.resetUsernameCd">Reset cooldown username</button>
+    </div>
+  </div>
+
+  <!-- Sheet: konfirmasi reset cooldown username -->
+  <div class="cf-sheet" id="cf-username-cd" role="dialog" aria-modal="true" aria-labelledby="cf-username-cd-title" hidden>
+    <div class="tx-sheet-head">
+      <h3 id="cf-username-cd-title" data-i18n="admin.usernameCdConfirmTitle">Reset cooldown ganti username?</h3>
+      <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="admin.close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="cf-desc" id="cf-username-cd-msg-text"></p>
+    <div class="cf-actions">
+      <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+      <button type="button" class="btn-secondary" id="btn-username-cd-confirm" data-i18n="admin.applyUsernameCd">Reset cooldown</button>
+    </div>
+    <p id="cf-username-cd-msg" class="form-msg" role="status"></p>
+  </div>
+
+  <!-- Sheet: konfirmasi reset password -->
+  <div class="cf-sheet" id="cf-reset" role="dialog" aria-modal="true" aria-labelledby="cf-reset-title" hidden>
+    <div class="tx-sheet-head">
+      <h3 id="cf-reset-title" data-i18n="admin.resetConfirmTitle">Kirim email reset password?</h3>
+      <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="admin.close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="cf-desc" data-i18n="admin.resetConfirmMsg">Kami akan mengirim email berisi tautan reset password ke pengguna ini. Kamu tidak akan pernah melihat atau menetapkan password mereka.</p>
+    <div class="cf-actions">
+      <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+      <button type="button" class="btn-secondary" id="btn-reset-confirm" data-i18n="admin.sendReset">Kirim email reset</button>
+    </div>
+    <p id="cf-reset-msg" class="form-msg" role="status"></p>
+  </div>
+
+  <!-- Sheet: konfirmasi ubah role -->
+  <div class="cf-sheet" id="cf-role" role="dialog" aria-modal="true" aria-labelledby="cf-role-title" hidden>
+    <div class="tx-sheet-head">
+      <h3 id="cf-role-title" data-i18n="admin.roleConfirmTitle">Ubah peran pengguna?</h3>
+      <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="admin.close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="cf-desc" id="cf-role-msg-text"></p>
+    <div class="cf-actions">
+      <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+      <button type="button" class="btn-secondary" id="btn-role-confirm" data-i18n="admin.applyRole">Terapkan</button>
+    </div>
+    <p id="cf-role-msg" class="form-msg" role="status"></p>
+  </div>
+
+  <!-- Sheet: konfirmasi pulihkan akun -->
+  <div class="cf-sheet" id="cf-restore" role="dialog" aria-modal="true" aria-labelledby="cf-restore-title" hidden>
+    <div class="tx-sheet-head">
+      <h3 id="cf-restore-title" data-i18n="admin.restoreConfirmTitle">Pulihkan akun ini?</h3>
+      <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="admin.close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="cf-desc" id="cf-restore-msg-text"></p>
+    <div class="cf-actions">
+      <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+      <button type="button" class="btn-secondary" id="btn-restore-confirm" data-i18n="admin.applyRestore">Pulihkan akun</button>
+    </div>
+    <p id="cf-restore-msg" class="form-msg" role="status"></p>
+  </div>
+
+  <!-- Sheet: konfirmasi rollback transaksi -->
+  <div class="cf-sheet" id="cf-txrollback" role="dialog" aria-modal="true" aria-labelledby="cf-txrollback-title" hidden>
+    <div class="tx-sheet-head">
+      <h3 id="cf-txrollback-title" data-i18n="admin.txConfirmTitle">Konfirmasi rollback</h3>
+      <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="admin.close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div id="cf-txrollback-body"></div>
+    <div class="cf-actions">
+      <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+      <button type="button" class="btn-secondary" id="btn-txrollback-confirm" data-i18n="admin.txApply">Jalankan rollback</button>
+    </div>
+    <p id="cf-txrollback-msg" class="form-msg" role="status"></p>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

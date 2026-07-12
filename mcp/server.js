@@ -19,7 +19,8 @@ import {
   issueOAuthTokens,
   findOAuthAccessToken,
   findOAuthTokenByRefresh,
-  revokeOAuthTokenByRaw
+  revokeOAuthTokenByRaw,
+  touchOAuthAccessToken
 } from '../lib/oauth-store.js';
 
 const PORT = 3007;
@@ -116,7 +117,7 @@ function renderConsentPage({ client, params, user }) {
         <button type="submit" name="decision" value="deny" class="link-deny">Tolak</button>
       </form>
 
-      <p class="link-hint">Kamu bisa mencabut akses ini kapan saja dari Pengaturan &rarr; Autentikasi &rarr; MCP.</p>
+      <p class="link-hint">Kamu bisa mencabut akses ini kapan saja dari Pengaturan &rarr; Koneksi &rarr; MCP.</p>
     </div>
   </div>
 
@@ -279,6 +280,7 @@ const provider = {
     // 2) Token akses hasil alur OAuth (konektor web seperti Claude.ai).
     const oat = findOAuthAccessToken(token);
     if (oat && oat.expiresAt > Math.floor(Date.now() / 1000)) {
+      touchOAuthAccessToken(token);
       return {
         token,
         clientId: oat.clientId,
@@ -302,7 +304,8 @@ const provider = {
 
 const PAGE_SIZE = 10;
 
-function buildServerForUser(userId) {
+function buildServerForUser(userId, clientId) {
+  const sessionLabel = 'mcp:' + (clientId || 'unknown');
   const server = new McpServer(
     { name: 'uangku-mcp', version: '1.0.0' },
     {
@@ -366,7 +369,7 @@ function buildServerForUser(userId) {
       jumlah: z.number().int().positive().describe('Nominal transaksi dalam Rupiah, bilangan bulat positif')
     }
   }, async ({ jenis, keterangan, jumlah }) => {
-    const result = addTransaction(userId, jenis, keterangan, String(jumlah));
+    const result = addTransaction(userId, jenis, keterangan, String(jumlah), { sessionLabel });
     if (result.error) return { content: [{ type: 'text', text: `Gagal: ${result.error}` }], isError: true };
     const transaksiBaru = result.transaksi[0]; // baris terbaru — hasil query terurut id DESC
     return {
@@ -385,7 +388,7 @@ function buildServerForUser(userId) {
       'jangan panggil list_transactions sesudahnya kecuali pengguna minta melihat daftar.',
     inputSchema: { id: z.number().int().describe('ID transaksi yang akan dihapus') }
   }, async ({ id }) => {
-    const result = deleteTransaction(userId, id);
+    const result = deleteTransaction(userId, id, { sessionLabel });
     if (result.error) return { content: [{ type: 'text', text: `Gagal: ${result.error}` }], isError: true };
     return {
       content: [{
@@ -456,7 +459,7 @@ const bearerAuth = requireBearerAuth({
 app.all('/mcp', express.json(), bearerAuth, async (req, res) => {
   const userId = req.auth.extra.userId;
   try {
-    const server = buildServerForUser(userId);
+    const server = buildServerForUser(userId, req.auth.clientId);
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     res.on('close', () => { transport.close(); server.close(); });
     await server.connect(transport);

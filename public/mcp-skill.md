@@ -14,7 +14,7 @@ anything except the one item marked **ASK THE HUMAN**.
 ## 1. Get a token
 
 **ASK THE HUMAN:** "Please give me a UangKu MCP access token. You can create
-one at https://huzky.xyz/dashboard under Pengaturan (Settings) → Autentikasi →
+one at https://huzky.xyz/dashboard under Pengaturan (Settings) → Koneksi →
 MCP → 'Buat Token Baru'. Paste the token here (it starts with `uku_live_`)."
 
 Do not attempt to obtain this token any other way — it is only ever shown

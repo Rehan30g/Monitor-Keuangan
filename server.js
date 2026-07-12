@@ -10,6 +10,9 @@ import {
   handleResendCode,
   handleLogin,
   handleLoginMfa,
+  handleGoogleAuthStart,
+  handleGoogleCallback,
+  handleGoogleCompleteSignup,
   handleLogout,
   handleMe,
   handleGetTransactions,
@@ -19,6 +22,7 @@ import {
   handleGetTelegramStatus,
   handleTelegramUnlink,
   handleUpdateProfile,
+  handleChangeUsername,
   handleUploadAvatar,
   handleDeleteAvatar,
   handleGetAvatar,
@@ -32,13 +36,28 @@ import {
   handleListTokens,
   handleCreateToken,
   handleRevokeToken,
+  handleListMcpConnections,
+  handleRevokeMcpConnection,
   handleMfaStatus,
   handleMfaEnableStart,
   handleMfaEnableConfirm,
   handleMfaDisable,
-  handleMfaRegenerateBackup
+  handleMfaRegenerateBackup,
+  handleAdminListUsers,
+  handleAdminGetUser,
+  handleAdminResetPassword,
+  handleAdminSetRole,
+  handleAdminResetUsernameCooldown,
+  handleAdminListDeleted,
+  handleAdminRestoreUser,
+  handleAdminListTxSessions,
+  handleAdminPreviewRollback,
+  handleAdminRollback,
+  handleDashboardPage
 } from './lib/handlers.js';
 import { sendJson } from './lib/http-utils.js';
+import { purgeExpiredAccounts, purgeExpiredPendingGoogleSignups } from './lib/auth.js';
+import { isGoogleConfigured } from './lib/google-oauth.js';
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, 'public');
@@ -66,12 +85,14 @@ const AUTH_POST_ROUTES = new Set([
   '/api/resend-code',
   '/api/login',
   '/api/login/mfa',
+  '/api/auth/google/complete-signup',
   '/api/logout',
   '/api/transactions',
   '/api/transactions/delete',
   '/api/telegram/confirm-link',
   '/api/telegram/unlink',
   '/api/profile',
+  '/api/profile/username',
   '/api/profile/avatar',
   '/api/profile/avatar/delete',
   '/api/profile/password',
@@ -90,6 +111,17 @@ const AUTH_POST_ROUTES = new Set([
 
 // /api/tokens/<id>/revoke — id dinamis, tak bisa masuk Set exact-match di atas.
 const REVOKE_TOKEN_RE = /^\/api\/tokens\/[^/]+\/revoke$/;
+// /api/mcp/connections/<clientId>/revoke — sama, id dinamis.
+const REVOKE_MCP_CONNECTION_RE = /^\/api\/mcp\/connections\/[^/]+\/revoke$/;
+// Panel admin: segmen :userId dinamis.
+const ADMIN_USER_RE = /^\/api\/admin\/users\/([^/]+)$/;
+const ADMIN_RESET_PW_RE = /^\/api\/admin\/users\/([^/]+)\/reset-password$/;
+const ADMIN_SET_ROLE_RE = /^\/api\/admin\/users\/([^/]+)\/role$/;
+const ADMIN_RESET_USERNAME_CD_RE = /^\/api\/admin\/users\/([^/]+)\/reset-username-cooldown$/;
+const ADMIN_RESTORE_RE = /^\/api\/admin\/users\/([^/]+)\/restore$/;
+const ADMIN_TX_SESSIONS_RE = /^\/api\/admin\/users\/([^/]+)\/tx-sessions$/;
+const ADMIN_TX_ROLLBACK_PREVIEW_RE = /^\/api\/admin\/users\/([^/]+)\/tx-rollback\/preview$/;
+const ADMIN_TX_ROLLBACK_RE = /^\/api\/admin\/users\/([^/]+)\/tx-rollback$/;
 
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -98,7 +130,7 @@ const server = http.createServer(async (req, res) => {
   const isAllowedMethod =
     req.method === 'GET' ||
     req.method === 'HEAD' ||
-    (req.method === 'POST' && (AUTH_POST_ROUTES.has(pathname) || REVOKE_TOKEN_RE.test(pathname)));
+    (req.method === 'POST' && (AUTH_POST_ROUTES.has(pathname) || REVOKE_TOKEN_RE.test(pathname) || REVOKE_MCP_CONNECTION_RE.test(pathname) || ADMIN_RESET_PW_RE.test(pathname) || ADMIN_SET_ROLE_RE.test(pathname) || ADMIN_RESET_USERNAME_CD_RE.test(pathname) || ADMIN_RESTORE_RE.test(pathname) || ADMIN_TX_ROLLBACK_PREVIEW_RE.test(pathname) || ADMIN_TX_ROLLBACK_RE.test(pathname)));
 
   if (!isAllowedMethod) {
     res.writeHead(405, { 'Content-Type': 'text/plain' });
@@ -130,7 +162,8 @@ const server = http.createServer(async (req, res) => {
       turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '',
       telegramBotUrl: process.env.TELEGRAM_BOT_USERNAME
         ? `https://t.me/${process.env.TELEGRAM_BOT_USERNAME}`
-        : ''
+        : '',
+      googleEnabled: isGoogleConfigured()
     });
   }
 
@@ -149,6 +182,17 @@ const server = http.createServer(async (req, res) => {
   }
   if (pathname === '/api/login/mfa' && req.method === 'POST') {
     return handleLoginMfa(req, res);
+  }
+  // "Masuk dengan Google" (OAuth 2.0). Keduanya GET — lolos filter method GET.
+  // Tidak butuh location nginx baru: /api/* jatuh ke `location /` -> port 3005.
+  if (pathname === '/api/auth/google' && req.method === 'GET') {
+    return handleGoogleAuthStart(req, res);
+  }
+  if (pathname === '/api/auth/google/callback' && req.method === 'GET') {
+    return handleGoogleCallback(req, res);
+  }
+  if (pathname === '/api/auth/google/complete-signup' && req.method === 'POST') {
+    return handleGoogleCompleteSignup(req, res);
   }
   if (pathname === '/api/logout' && req.method === 'POST') {
     return handleLogout(req, res);
@@ -176,6 +220,9 @@ const server = http.createServer(async (req, res) => {
   }
   if (pathname === '/api/profile' && req.method === 'POST') {
     return handleUpdateProfile(req, res);
+  }
+  if (pathname === '/api/profile/username' && req.method === 'POST') {
+    return handleChangeUsername(req, res);
   }
   if (pathname === '/api/profile/avatar' && req.method === 'POST') {
     return handleUploadAvatar(req, res);
@@ -214,6 +261,13 @@ const server = http.createServer(async (req, res) => {
     const tokenId = pathname.split('/')[3];
     return handleRevokeToken(req, res, tokenId);
   }
+  if (pathname === '/api/mcp/connections' && req.method === 'GET') {
+    return handleListMcpConnections(req, res);
+  }
+  if (req.method === 'POST' && REVOKE_MCP_CONNECTION_RE.test(pathname)) {
+    const clientId = pathname.split('/')[4];
+    return handleRevokeMcpConnection(req, res, clientId);
+  }
   if (pathname === '/api/mfa/status' && req.method === 'GET') {
     return handleMfaStatus(req, res);
   }
@@ -229,12 +283,49 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/mfa/backup-codes' && req.method === 'POST') {
     return handleMfaRegenerateBackup(req, res);
   }
+  if (pathname === '/api/admin/users' && req.method === 'GET') {
+    return handleAdminListUsers(req, res);
+  }
+  if (pathname === '/api/admin/deleted-users' && req.method === 'GET') {
+    return handleAdminListDeleted(req, res);
+  }
+  if (req.method === 'POST' && ADMIN_RESTORE_RE.test(pathname)) {
+    return handleAdminRestoreUser(req, res, pathname.match(ADMIN_RESTORE_RE)[1]);
+  }
+  if (req.method === 'POST' && ADMIN_RESET_PW_RE.test(pathname)) {
+    return handleAdminResetPassword(req, res, pathname.match(ADMIN_RESET_PW_RE)[1]);
+  }
+  if (req.method === 'POST' && ADMIN_SET_ROLE_RE.test(pathname)) {
+    return handleAdminSetRole(req, res, pathname.match(ADMIN_SET_ROLE_RE)[1]);
+  }
+  if (req.method === 'POST' && ADMIN_RESET_USERNAME_CD_RE.test(pathname)) {
+    return handleAdminResetUsernameCooldown(req, res, pathname.match(ADMIN_RESET_USERNAME_CD_RE)[1]);
+  }
+  if (req.method === 'GET' && ADMIN_TX_SESSIONS_RE.test(pathname)) {
+    return handleAdminListTxSessions(req, res, pathname.match(ADMIN_TX_SESSIONS_RE)[1]);
+  }
+  if (req.method === 'POST' && ADMIN_TX_ROLLBACK_PREVIEW_RE.test(pathname)) {
+    return handleAdminPreviewRollback(req, res, pathname.match(ADMIN_TX_ROLLBACK_PREVIEW_RE)[1]);
+  }
+  if (req.method === 'POST' && ADMIN_TX_ROLLBACK_RE.test(pathname)) {
+    return handleAdminRollback(req, res, pathname.match(ADMIN_TX_ROLLBACK_RE)[1]);
+  }
+  if (req.method === 'GET' && ADMIN_USER_RE.test(pathname)) {
+    return handleAdminGetUser(req, res, pathname.match(ADMIN_USER_RE)[1]);
+  }
   if (pathname.startsWith('/api/avatar/') && req.method === 'GET') {
     const userId = pathname.slice('/api/avatar/'.length);
     return handleGetAvatar(req, res, userId);
   }
   if (pathname.startsWith('/api/')) {
     return sendJson(res, 404, { error: 'Not Found' });
+  }
+
+  // Dashboard dirender per-request (bukan file statis) supaya tautan panel
+  // admin bisa dihapus sepenuhnya dari HTML untuk user biasa, bukan cuma
+  // disembunyikan lewat CSS/JS.
+  if ((pathname === '/dashboard' || pathname === '/dashboard.html') && req.method === 'GET') {
+    return handleDashboardPage(req, res);
   }
 
   // Redirect root path to index.html
@@ -299,3 +390,23 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, HOST, () => {
   console.log(`🌐 Server running securely on http://${HOST}:${PORT}`);
 });
+
+// Sweep akun soft-deleted yang melewati masa tenggang 7 hari & hapus permanen.
+function runAccountPurge() {
+  try {
+    const n = purgeExpiredAccounts();
+    if (n > 0) console.log(`🧹 Purged ${n} expired account(s) past the 7-day grace period.`);
+  } catch (err) {
+    console.error('Gagal purge akun kedaluwarsa:', err.message);
+  }
+  try {
+    purgeExpiredPendingGoogleSignups();
+  } catch (err) {
+    console.error('Gagal purge pending Google signup kedaluwarsa:', err.message);
+  }
+}
+
+// Jalankan sekali sesaat setelah listen (jangan tunggu satu jam penuh untuk
+// sweep pertama), lalu berulang tiap jam.
+setTimeout(runAccountPurge, 5000).unref();
+setInterval(runAccountPurge, 60 * 60 * 1000).unref();

@@ -38,6 +38,7 @@ function resetCaptcha() {
 
 document.addEventListener('DOMContentLoaded', () => {
   const registerForm = document.getElementById('register-form');
+  const googleUsernameForm = document.getElementById('google-username-form');
   const loginForm = document.getElementById('login-form');
   const verifyForm = document.getElementById('verify-form');
   const forgotForm = document.getElementById('forgot-form');
@@ -48,6 +49,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (errorEl) {
       errorEl.textContent = message;
     }
+  }
+
+  // --- "Masuk dengan Google": tampilkan tombol hanya bila server mengaktifkannya
+  // (GOOGLE_CLIENT_ID/SECRET ada). Kalau tidak, tombol tetap tersembunyi. ---
+  const googleBtn = document.getElementById('google-btn');
+  const googleDivider = document.getElementById('google-divider');
+  if (googleBtn) {
+    fetch('/api/config')
+      .then((r) => r.json())
+      .then((cfg) => {
+        if (cfg && cfg.googleEnabled) {
+          googleBtn.hidden = false;
+          if (googleDivider) googleDivider.hidden = false;
+        }
+      })
+      .catch(() => {});
+  }
+
+  // Pesan galat dari callback Google (redirect ke /login?googleError=<kode>).
+  const GOOGLE_ERR_KEYS = {
+    google_state: 'auth.google.err.state',
+    google_failed: 'auth.google.err.failed',
+    google_no_sub: 'auth.google.err.failed',
+    google_email_unverified: 'auth.google.err.unverified',
+    link_requires_verified_email: 'auth.google.err.linkVerify',
+    account_deleted: 'auth.google.err.deleted'
+  };
+  const googleErr = new URLSearchParams(window.location.search).get('googleError');
+  if (googleErr && errorEl) {
+    showError(window.t(GOOGLE_ERR_KEYS[googleErr] || 'auth.google.err.failed'));
   }
 
   async function submitAuth(url, payload) {
@@ -90,6 +121,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Halaman pemilihan username untuk pendaftaran Google baru. Token pending
+  // ada di query (?token=...); username dikirim ke complete-signup. Sukses →
+  // sesi sudah terbit (Set-Cookie) → langsung ke dashboard.
+  if (googleUsernameForm) {
+    const token = new URLSearchParams(window.location.search).get('token') || '';
+    if (!token) {
+      showError(window.t('auth.googleUsername.noToken'));
+      googleUsernameForm.querySelector('button[type="submit"]').disabled = true;
+    }
+
+    googleUsernameForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showError('');
+      const username = googleUsernameForm.username.value.trim();
+      const { ok, data } = await submitAuth('/api/auth/google/complete-signup', { token, username });
+      if (ok) {
+        window.location.href = data.redirect || '/dashboard';
+      } else {
+        showError(data.error ? window.tServer(data.error) : window.t('auth.regFail'));
+      }
+    });
+  }
+
   function finishLogin() {
     const redirectTo = sessionStorage.getItem('postLoginRedirect');
     sessionStorage.removeItem('postLoginRedirect');
@@ -99,23 +153,48 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginForm) {
     const mfaForm = document.getElementById('mfa-form');
     const mfaError = document.getElementById('mfa-error');
-    const loginAlt = document.getElementById('login-alt');
+    const loginContainer = document.getElementById('login-container');
+    const mfaContainer = document.getElementById('mfa-container');
+    const mfaBack = document.getElementById('mfa-back');
     let mfaChallengeId = null;
 
     function showMfaError(message) {
       if (mfaError) mfaError.textContent = message;
     }
 
-    // Beralih dari form login ke langkah kedua (kode MFA).
+    // Langkah kedua (kode MFA) tampil sebagai container terpisah dalam alur
+    // halaman yang sama, menggantikan kartu login di tempat yang sama —
+    // bukan jendela/overlay yang melayang di atasnya.
     function showMfaStep(challengeId) {
       mfaChallengeId = challengeId;
-      loginForm.hidden = true;
-      if (loginAlt) loginAlt.hidden = true;
-      const turnstile = document.getElementById('turnstile-container');
-      if (turnstile) turnstile.hidden = true;
-      mfaForm.hidden = false;
+      showMfaError('');
+      if (loginContainer) loginContainer.hidden = true;
+      if (mfaContainer) mfaContainer.hidden = false;
       const codeInput = document.getElementById('mfa-code');
-      if (codeInput) codeInput.focus();
+      if (codeInput) {
+        codeInput.value = '';
+        codeInput.focus();
+      }
+    }
+
+    function backToLogin() {
+      if (mfaContainer) mfaContainer.hidden = true;
+      if (loginContainer) loginContainer.hidden = false;
+    }
+
+    if (mfaBack) {
+      mfaBack.addEventListener('click', (e) => {
+        e.preventDefault();
+        backToLogin();
+      });
+    }
+
+    // Alur Google + MFA: callback mengarahkan ke /login?mfaChallenge=<id> untuk
+    // akun ber-MFA. Tampilkan langsung langkah MFA; POST /api/login/mfa menerbitkan sesi.
+    const pendingChallenge = new URLSearchParams(window.location.search).get('mfaChallenge');
+    if (pendingChallenge && mfaContainer) {
+      showMfaStep(pendingChallenge);
+      history.replaceState(null, '', window.location.pathname);
     }
 
     loginForm.addEventListener('submit', async (e) => {
