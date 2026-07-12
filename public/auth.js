@@ -1,3 +1,10 @@
+// Kalau halaman ini dibuka lewat redirect eksternal (mis. dari alur OAuth MCP)
+// dengan ?returnTo=..., simpan supaya login.js tahu ke mana harus kembali.
+(function tangkapReturnTo() {
+  const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+  if (returnTo) sessionStorage.setItem('postLoginRedirect', returnTo);
+})();
+
 let turnstileWidgetId = null;
 
 window.onTurnstileLoad = function () {
@@ -33,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const registerForm = document.getElementById('register-form');
   const loginForm = document.getElementById('login-form');
   const verifyForm = document.getElementById('verify-form');
+  const forgotForm = document.getElementById('forgot-form');
+  const resetForm = document.getElementById('reset-form');
   const errorEl = document.getElementById('auth-error');
 
   function showError(message) {
@@ -72,9 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const { ok, data } = await submitAuth('/api/register', { username, email, password, captchaToken });
       if (ok) {
+        // Pesan disimpan dalam bentuk Indonesia (kanonik); diterjemahkan saat tampil.
         goToVerify(data.verifyToken, 'Kode verifikasi telah dikirim ke email kamu.');
       } else {
-        showError(data.error || 'Registrasi gagal.');
+        showError(data.error ? window.tServer(data.error) : window.t('auth.regFail'));
         resetCaptcha();
       }
     });
@@ -92,11 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (ok) {
         const redirectTo = sessionStorage.getItem('postLoginRedirect');
         sessionStorage.removeItem('postLoginRedirect');
-        window.location.href = redirectTo || '/';
+        window.location.href = redirectTo || '/dashboard';
       } else if (status === 403 && data.needsVerification) {
         goToVerify(data.verifyToken, data.error);
       } else {
-        showError(data.error || 'Login gagal.');
+        showError(data.error ? window.tServer(data.error) : window.t('auth.loginFail'));
         resetCaptcha();
       }
     });
@@ -112,7 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (msg) {
       showError('');
-      descEl.textContent = msg;
+      descEl.removeAttribute('data-i18n');
+      descEl.textContent = window.tServer(msg);
     }
 
     verifyForm.addEventListener('submit', async (e) => {
@@ -124,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (ok) {
         window.location.href = '/login';
       } else {
-        showError(data.error || 'Verifikasi gagal.');
+        showError(data.error ? window.tServer(data.error) : window.t('auth.verifyFail'));
       }
     });
 
@@ -134,9 +145,59 @@ document.addEventListener('DOMContentLoaded', () => {
       const { ok, data } = await submitAuth('/api/resend-code', { token });
       if (ok) {
         token = data.token;
-        descEl.textContent = data.message || 'Kode baru telah dikirim.';
+        descEl.removeAttribute('data-i18n');
+        descEl.textContent = data.message ? window.tServer(data.message) : window.t('auth.codeSent');
       } else {
-        showError(data.error || 'Gagal mengirim ulang kode.');
+        showError(data.error ? window.tServer(data.error) : window.t('auth.resendFail'));
+      }
+    });
+  }
+
+  if (forgotForm) {
+    forgotForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (errorEl) errorEl.style.color = '';
+      showError('');
+      const email = forgotForm.email.value.trim();
+      const captchaToken = getCaptchaToken();
+
+      const { ok, data } = await submitAuth('/api/forgot-password', { email, captchaToken });
+      if (ok) {
+        if (errorEl) errorEl.style.color = 'var(--good)';
+        showError(data.message || 'Jika email tersebut terdaftar, kami sudah mengirim link reset password ke sana.');
+        forgotForm.querySelector('button[type="submit"]').disabled = true;
+      } else {
+        showError(data.error ? window.tServer(data.error) : 'Gagal mengirim permintaan. Coba lagi.');
+        resetCaptcha();
+      }
+    });
+  }
+
+  if (resetForm) {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token') || '';
+
+    if (!token) {
+      showError('Link reset password tidak valid — token tidak ditemukan.');
+      resetForm.querySelector('button[type="submit"]').disabled = true;
+    }
+
+    resetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showError('');
+      const newPassword = resetForm.newPassword.value;
+      const confirmPassword = resetForm.confirmPassword.value;
+
+      if (newPassword !== confirmPassword) {
+        showError('Konfirmasi password tidak cocok.');
+        return;
+      }
+
+      const { ok, data } = await submitAuth('/api/reset-password', { token, newPassword });
+      if (ok) {
+        window.location.href = '/login';
+      } else {
+        showError(data.error ? window.tServer(data.error) : 'Gagal mereset password. Coba lagi.');
       }
     });
   }

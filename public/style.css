@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Monitor Keuangan — flat, quiet, hairline UI
+   UangKu — flat, quiet, hairline UI
    Theming: CSS custom properties. Default follows OS; manual override via
    [data-theme] on <html> (set by theme.js from localStorage).
    ========================================================================== */
@@ -24,6 +24,16 @@
   --critical:      #d03b3b;
 
   --focus-ring:    rgba(42, 120, 214, 0.35);
+
+  /* Palet avatar abstrak (identicon) — sama dengan palet kategorikal chart */
+  --avatar-1: #2a78d6;
+  --avatar-2: #1baf7a;
+  --avatar-3: #eda100;
+  --avatar-4: #008300;
+  --avatar-5: #4a3aa7;
+  --avatar-6: #e34948;
+  --avatar-7: #e87ba4;
+  --avatar-8: #eb6834;
 }
 
 :root[data-theme="dark"] {
@@ -46,6 +56,15 @@
   --critical:      #e66767;
 
   --focus-ring:    rgba(57, 135, 229, 0.45);
+
+  --avatar-1: #3987e5;
+  --avatar-2: #199e70;
+  --avatar-3: #c98500;
+  --avatar-4: #008300;
+  --avatar-5: #9085e9;
+  --avatar-6: #e66767;
+  --avatar-7: #d55181;
+  --avatar-8: #d95926;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -69,6 +88,15 @@
     --critical:      #e66767;
 
     --focus-ring:    rgba(57, 135, 229, 0.45);
+
+    --avatar-1: #3987e5;
+    --avatar-2: #199e70;
+    --avatar-3: #c98500;
+    --avatar-4: #008300;
+    --avatar-5: #9085e9;
+    --avatar-6: #e66767;
+    --avatar-7: #d55181;
+    --avatar-8: #d95926;
   }
 }
 
@@ -89,6 +117,19 @@ body {
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  /* Teks UI (navbar, header, label, dsb) tidak bisa diseleksi — hanya area
+     transaksi & angka Rupiah yang boleh, lihat pengecualian di bawah.
+     (Tidak berlaku untuk input/textarea — nilainya selalu tetap bisa diseleksi.) */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.table-scroll table,
+.stat-value,
+.recent-amount,
+.tt-val {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 h1, h2, h3 { margin: 0; font-weight: 600; }
@@ -221,6 +262,104 @@ input:focus-visible, select:focus-visible, button:focus-visible {
   color: var(--ink-2);
 }
 
+/* Halaman hubungkan Telegram: avatar user ↔ badge Telegram */
+.link-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 24px 0 14px;
+}
+.tg-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #29a9eb;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.tg-badge svg { width: 36px; height: 36px; display: block; }
+.link-connector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.link-connector span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--baseline);
+}
+.link-visual.is-linked .link-connector span { background: var(--accent); }
+
+.link-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+.link-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.link-username {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.link-state {
+  text-align: center;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  min-height: 1.3em;
+  margin-bottom: 16px;
+}
+.link-state.is-error { color: var(--critical); }
+.link-state.is-success { color: var(--good); }
+
+.link-confirm { width: 100%; }
+
+.claude-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #D97757;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.claude-badge img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.claude-badge.generic-badge { background: var(--surface-2); color: var(--ink-2); }
+.claude-badge.generic-badge svg { width: 32px; height: 32px; }
+
+.link-deny {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  color: var(--ink-2);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.link-deny:hover { color: var(--ink); }
+
+.link-hint {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
 footer {
   text-align: center;
   padding: 16px;
@@ -317,49 +456,192 @@ footer {
 }
 .sidebar-user span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* Avatar: foto profil (img) atau identicon abstrak yang digambar (svg) */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: none;
+  background: var(--surface-2);
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar svg { width: 100%; height: 100%; display: block; }
+.avatar-sm { width: 28px; height: 28px; }
+.avatar-lg { width: 64px; height: 64px; }
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.profile-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.profile-actions .btn-danger { height: 34px; }
+
+/* Tombol ikon-saja (mis. hapus foto): persegi, ikon di tengah, tanpa teks */
+.btn-icon {
+  width: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-icon svg { flex: none; }
+
+/* "Ganti foto": label yang berperilaku seperti tombol penuh (ikon + teks) */
+.btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.btn-upload svg { color: var(--muted); flex: none; }
+.btn-upload:active { background: var(--surface-2); border-color: var(--baseline); }
+
+/* Baris nama panggilan: input & tombol setinggi dan sejajar */
+.profile-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.profile-form .form-group { flex: 1; min-width: 180px; gap: 4px; }
+.profile-form input,
+.profile-form button {
+  height: 36px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 /* Mobile top header */
 .mobile-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 16px 18px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
   background: var(--surface);
   border-bottom: 1px solid var(--hairline);
   position: sticky;
   top: 0;
   z-index: 10;
 }
-.mobile-header .brand { padding: 0; font-size: 0.95rem; }
-.mobile-header #mobile-username { font-size: 0.85rem; color: var(--muted); }
+.mobile-header .brand { padding: 0; font-size: 1.08rem; gap: 10px; }
+.mobile-header .brand svg { width: 22px; height: 22px; }
+.mobile-user { display: flex; align-items: center; gap: 8px; }
+/* Di mobile hanya foto yang tampil; elemen nama tetap di DOM (diisi script.js). */
+.mobile-user #mobile-username { display: none; }
 
-/* Bottom tab bar (mobile) */
+/* Bottom tab bar (mobile) — frosted: blur di belakang, tint gradien surface
+   di tengah, konten nav tetap tajam di depan.
+   Urutan cat (depan → belakang): .nav-item (z:auto) → ::after gradien (z:-1)
+   → ::before blur (z:-2). `isolation: isolate` mengunci stacking context
+   sehingga z negatif pseudo-element tidak jatuh ke belakang halaman. */
 .tabbar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   display: flex;
-  background: var(--surface);
   border-top: 1px solid var(--hairline);
   z-index: 10;
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  isolation: isolate;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.tabbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.tabbar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  /* Anchor solid tipis di dasar, lalu memudar panjang & halus (banyak titik,
+     kurva melengkung) sampai transparan penuh di puncak bar. */
+  background: linear-gradient(
+    to top,
+    var(--surface) 0%,
+    var(--surface) 8%,
+    color-mix(in srgb, var(--surface) 92%, transparent) 20%,
+    color-mix(in srgb, var(--surface) 75%, transparent) 35%,
+    color-mix(in srgb, var(--surface) 55%, transparent) 50%,
+    color-mix(in srgb, var(--surface) 35%, transparent) 65%,
+    color-mix(in srgb, var(--surface) 18%, transparent) 80%,
+    color-mix(in srgb, var(--surface) 6%, transparent) 92%,
+    transparent 100%
+  );
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tabbar { background: var(--surface); }
+  .tabbar::before, .tabbar::after { content: none; }
 }
 .tabbar .nav-item {
   flex: 1;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
   align-items: center;
-  padding: 8px 4px 7px;
-  font-size: 0.68rem;
+  padding: 12px 4px 10px;
+  font-size: 0.76rem;
   border-radius: 0;
 }
+.tabbar .nav-item svg { width: 23px; height: 23px; }
 .tabbar .nav-item.is-active { background: transparent; }
 
 .main {
-  padding: 20px 16px 84px; /* room for bottom tabbar */
+  padding: 20px 16px 100px; /* room for bottom tabbar yang lebih besar */
   max-width: 1080px;
   margin: 0 auto;
   width: 100%;
+}
+
+/* Mobile: header & tabbar dilepas dari scroll dokumen supaya tidak ikut efek
+   "overscroll stretch" Chrome saat konten ditarik melewati batas atas/bawah.
+   Hanya .main yang jadi elemen scroll; header & tabbar jadi item flex diam
+   di kolom yang tingginya dikunci sebesar viewport. */
+@media (max-width: 959px) {
+  html, body { height: 100%; overscroll-behavior: none; }
+
+  .content-col {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .mobile-header { position: static; flex: none; }
+
+  .main {
+    flex: 1 1 auto;
+    min-height: 0; /* wajib agar flex child ini bisa scroll internal, bukan meluap */
+    /* padding-bottom tetap dari rule dasar (100px) — .tabbar kembali fixed
+       overlay di bawah ini, jadi konten tetap butuh ruang supaya tak
+       ketutupan olehnya. */
+    overflow-y: auto;
+    overscroll-behavior-y: contain; /* redam efek stretch di sini saja, tak menjalar ke luar */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* .tabbar SENGAJA dibiarkan fixed (warisan rule dasar) walau .main sudah
+     jadi elemen scroll sendiri — supaya konten yang di-scroll di .main tetap
+     lewat *di belakang* tabbar dan efek frosted blur+gradien (::before/::after
+     di atas) punya sesuatu untuk diburamkan. Mengunci scroll dokumen
+     (html/body di atas) sudah cukup untuk menghentikan bug "overscroll
+     stretch" Chrome — tidak perlu mengubah positioning tabbar juga. */
 }
 
 /* Desktop layout */
@@ -567,13 +849,179 @@ td.ket { white-space: normal; min-width: 140px; }
 .tx-form {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
-}
-@media (min-width: 700px) {
-  .tx-form { grid-template-columns: 150px minmax(0, 1fr) 170px auto; align-items: end; }
+  gap: 12px;
 }
 .tx-form .form-group { gap: 4px; }
 .tx-form button { height: 36px; }
+
+/* FAB tambah transaksi — hidup di luar .tab; visibilitas per-tab diatur JS
+   (bukaTab) lewat atribut `hidden`: tampil di Ringkasan/Transaksi/Laporan.
+   `--fab-clear` diisi oleh JS (measureFabClearance() di script.js) dari tinggi
+   .tabbar yang SUNGGUHAN (getBoundingClientRect), bukan angka tebakan — jadi
+   tidak pernah meleset walau address bar Chrome berubah-ubah tinggi viewport.
+   Fallback 78px hanya jaga-jaga sebelum JS sempat jalan. */
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: var(--fab-clear, 78px);
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1px solid var(--accent-hover);
+  color: var(--accent-ink);
+  z-index: 45;
+  transition: background 0.15s ease, transform 0.18s ease;
+}
+.fab[hidden] { display: none; } /* display:flex di atas mengalahkan [hidden] bawaan */
+.fab:active { transform: scale(0.94); }
+.fab svg { transition: transform 0.25s ease; }
+.fab.is-open svg { transform: rotate(45deg); } /* "+" berputar jadi "×" */
+
+.tx-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 18, 26, 0.32);
+  z-index: 40;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+.tx-overlay.is-open { opacity: 1; }
+
+/* Panel form melayang: tumbuh dari arah FAB (transform-origin kanan-bawah). */
+.tx-sheet {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(var(--fab-clear, 78px) + 54px + 12px);
+  max-width: 380px;
+  margin-left: auto;
+  max-height: calc(100dvh - var(--fab-clear, 78px) - 54px - 90px);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 16px;
+  z-index: 44;
+  opacity: 0;
+  transform: scale(0.9) translateY(10px);
+  transform-origin: bottom right;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.tx-sheet.is-open { opacity: 1; transform: none; }
+
+/* Kunci scroll di belakang panel saat terbuka (html menutupi kedua skema:
+   document-level di desktop, .main di mobile). */
+html.tx-modal-open,
+html.tx-modal-open .main {
+  overflow: hidden;
+}
+
+.tx-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.tx-sheet-head h3 { font-size: 1rem; }
+.tx-sheet-close {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--hairline);
+  color: var(--ink-2);
+  border-radius: 6px;
+}
+.tx-sheet-close:hover { background: var(--surface-2); border-color: var(--hairline); color: var(--ink); }
+
+.tx-jenis-seg { display: flex; }
+.tx-jenis-seg button { flex: 1; }
+
+@media (min-width: 960px) {
+  .fab { right: 32px; bottom: 32px; }
+  .tx-sheet {
+    left: auto;
+    right: 32px;
+    bottom: calc(32px + 54px + 12px);
+    width: 380px;
+    max-height: calc(100vh - 130px);
+  }
+}
+
+/* Jendela konfirmasi melayang: bahasa visual sama dengan .tx-sheet
+   (surface + hairline + skala/fade), tapi berlabuh di tengah layar. */
+.cf-sheet {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  top: 50%;
+  max-width: 400px;
+  margin: 0 auto;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 16px;
+  z-index: 48;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.94);
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.cf-sheet.is-open { opacity: 1; transform: translateY(-50%); }
+.cf-sheet .tx-form[hidden] { display: none; } /* display:grid mengalahkan [hidden] bawaan */
+
+/* Overlay konfirmasi harus menutupi FAB juga (FAB z-index 45) */
+#cf-overlay { z-index: 47; }
+
+.cf-desc { font-size: 0.9rem; color: var(--ink-2); margin-bottom: 14px; }
+.cf-sheet .tx-form .cf-desc { margin-bottom: 0; }
+.cf-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* Severity Zona Merah dipertahankan di jendela hapus akun */
+.cf-danger { border-color: var(--critical); }
+.cf-danger .tx-sheet-head h3 { color: var(--critical); }
+.cf-danger .btn-danger { border-color: var(--critical); }
+
+/* Baris email: nilai ter-masking + tombol ubah berdampingan */
+.settings-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mcp-intro { margin-bottom: 4px; }
+.mcp-docs-link {
+  display: inline-block;
+  font-size: 0.85rem;
+  margin: 0 14px 10px 0;
+}
+.mcp-url {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: 5px;
+  padding: 4px 8px;
+  color: var(--ink);
+  white-space: nowrap;
+}
 
 .form-msg { font-size: 0.85rem; margin-top: 8px; min-height: 1.2em; }
 .form-msg.is-error { color: var(--critical); }
@@ -656,6 +1104,11 @@ details.table-view[open] summary { margin-bottom: 8px; }
   flex-wrap: wrap;
 }
 .settings-row:last-child { border-bottom: none; }
+/* Elemen kanan (tombol/segmented/nilai) selalu menempel ke kanan — baik
+   muat sebaris dengan label maupun terpaksa turun ke baris sendiri saat
+   sempit (space-between saja tak cukup: baris yang isinya cuma 1 item
+   jatuh ke kiri secara default). Konsisten di semua .settings-row. */
+.settings-row > *:last-child { margin-left: auto; }
 .settings-row .settings-label { font-size: 0.92rem; }
 .settings-row .settings-desc { font-size: 0.8rem; color: var(--muted); margin-top: 1px; }
 .settings-value { font-size: 0.92rem; color: var(--ink-2); font-weight: 500; }
@@ -671,5 +1124,428 @@ details.table-view[open] summary { margin-bottom: 8px; }
   .btn-danger:hover { background: var(--surface-2); border-color: var(--critical); }
 }
 
+/* Header profil (Pengaturan): avatar besar + nama + @username, selalu tampil */
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.avatar-xl { width: 84px; height: 84px; }
+.profile-ident { flex: 1; min-width: 140px; }
+.profile-nama {
+  font-size: 1.15rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-username { font-size: 0.85rem; color: var(--muted); margin-top: 1px; }
+
+/* Sub-tab Pengaturan: baris pill horizontal; scroll menyamping bila sempit */
+.subtabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.subtabs::-webkit-scrollbar { display: none; }
+.subtabs button {
+  flex: none;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  padding: 7px 14px;
+  font-size: 0.85rem;
+}
+.subtabs button:active { background: var(--surface-2); }
+.subtabs button.is-active {
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 500;
+}
+@media (hover: hover) and (pointer: fine) {
+  .subtabs button:hover { background: var(--surface-2); }
+}
+
+.subtab-panel { display: none; }
+.subtab-panel.is-active { display: block; }
+
+/* Zona merah: bingkai hairline merah, tetap flat */
+.card-danger { border-color: var(--critical); }
+.card-danger .card-head h3 { color: var(--critical); }
+.card-danger .btn-danger { border-color: var(--critical); }
+
+/* Tentang */
+.about-desc { font-size: 0.88rem; color: var(--ink-2); margin-bottom: 4px; }
+.about-link { font-size: 0.92rem; font-weight: 500; color: var(--ink-2); text-decoration: underline; }
+.about-link:active { color: var(--ink); }
+@media (hover: hover) and (pointer: fine) {
+  .about-link:hover { color: var(--ink); }
+}
+
+/* Token API (Personal Access Token) */
+.pat-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.pat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+  flex-wrap: wrap;
+}
+.pat-row:last-child { border-bottom: none; }
+.pat-row-info { min-width: 0; }
+.pat-row-label { font-size: 0.92rem; font-weight: 500; overflow-wrap: anywhere; }
+.pat-row-meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.pat-row-revoke {
+  background: transparent;
+  border: 1px solid var(--hairline);
+  color: var(--critical);
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  margin-left: auto;
+}
+.pat-row-revoke:active { background: var(--surface-2); border-color: var(--critical); }
+@media (hover: hover) and (pointer: fine) {
+  .pat-row-revoke:hover { background: var(--surface-2); border-color: var(--critical); }
+}
+.pat-empty { font-size: 0.85rem; color: var(--muted); margin: 4px 0 0; }
+
+.cf-desc-warn { color: var(--critical); font-weight: 500; }
+.pat-reveal-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  background: var(--surface-2);
+}
+.pat-reveal-box code {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
 /* Turnstile container spacing */
 #turnstile-container:not(:empty) { margin: 2px 0; }
+
+/* ==========================================================================
+   Landing page (logged-out gate)
+   ========================================================================== */
+
+.landing-shell {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Top nav */
+.landing-nav {
+  border-bottom: 1px solid var(--hairline);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.landing-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+}
+.landing-brand { margin-bottom: 0; }
+.landing-nav-actions { display: flex; align-items: center; gap: 8px; }
+.landing-nav-actions a { text-decoration: none; }
+
+.landing { flex: 1; }
+
+/* Hero */
+.landing-hero {
+  padding-top: 72px;
+  padding-bottom: 72px;
+  text-align: center;
+}
+.hero-eyebrow {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 4px 12px;
+  margin-bottom: 20px;
+}
+.hero-title {
+  font-size: clamp(1.9rem, 5.5vw, 3.1rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+.hero-sub {
+  max-width: 620px;
+  margin: 0 auto 28px;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.hero-cta {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.hero-cta a { text-decoration: none; }
+.hero-cta button { padding: 9px 20px; font-weight: 500; }
+
+/* Hero chart card */
+.hero-chart {
+  margin: 48px auto 0;
+  max-width: 680px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 16px 16px 8px;
+  text-align: left;
+}
+.hero-chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-bottom: 10px;
+}
+.hero-chart-tag { font-weight: 400; font-size: 0.78rem; color: var(--muted); }
+.hero-chart svg { width: 100%; height: 150px; }
+.hc-grid { stroke: var(--hairline); stroke-width: 1; }
+.hc-line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+  animation: hc-draw 2.4s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
+}
+.hc-dot {
+  fill: var(--accent);
+  opacity: 0;
+  animation: hc-dot-in 0.4s ease 2.7s forwards, hc-dot-pulse 2.4s ease-in-out 3.2s infinite;
+  transform-origin: 640px 30px;
+}
+@keyframes hc-draw { to { stroke-dashoffset: 0; } }
+@keyframes hc-dot-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hc-dot-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.6); }
+}
+
+/* Entrance reveal (staggered, on load) */
+.landing-reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: landing-rise 0.55s cubic-bezier(0.2, 0.6, 0.2, 1) forwards;
+}
+.landing-reveal:nth-child(1) { animation-delay: 0.05s; }
+.landing-reveal:nth-child(2) { animation-delay: 0.15s; }
+.landing-reveal:nth-child(3) { animation-delay: 0.25s; }
+.landing-reveal:nth-child(4) { animation-delay: 0.35s; }
+.landing-reveal:nth-child(5) { animation-delay: 0.45s; }
+@keyframes landing-rise {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Sections */
+.landing-section {
+  padding-top: 56px;
+  padding-bottom: 64px;
+  border-top: 1px solid var(--hairline);
+}
+.section-title {
+  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.section-sub {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-bottom: 28px;
+}
+
+/* Feature grid */
+.feature-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 20px;
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+.feature-card h3 {
+  font-size: 1rem;
+  color: var(--ink);
+  margin: 14px 0 6px;
+}
+.feature-card p {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  color: var(--accent);
+  background: var(--surface-2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .feature-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--baseline);
+  }
+}
+
+/* Steps */
+.steps {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+.step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 18px 0;
+}
+.step + .step { border-top: 1px solid var(--hairline); }
+.step-num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.step h3 { font-size: 0.98rem; color: var(--ink); margin-bottom: 4px; }
+.step p { font-size: 0.9rem; line-height: 1.55; color: var(--ink-2); }
+
+/* Closing CTA */
+.closing-cta {
+  border-top: 1px solid var(--hairline);
+  padding: 56px 0 72px;
+  text-align: center;
+}
+.closing-cta h2 {
+  font-size: clamp(1.3rem, 3.4vw, 1.8rem);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.closing-cta p {
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  margin-bottom: 24px;
+}
+
+/* Mobile: header tenang — hero sudah punya pasangan CTA sendiri persis di bawahnya,
+   jadi di layar sempit nav cukup menawarkan "Masuk" sebagai tautan teks yang sunyi.
+   (Tombol "Daftar" header disembunyikan; "Mulai gratis" di hero mengambil peran itu.
+   Toggling guest-only/auth-only dari landing.js memakai atribut `hidden`, jadi
+   display:none tambahan di sini tidak mengganggu logika itu.) */
+@media (max-width: 639px) {
+  .landing-nav-actions a.guest-only[href="/register"] { display: none; }
+  .landing-nav-actions a.guest-only[href="/login"] button {
+    background: transparent;
+    border-color: transparent;
+    color: var(--ink-2);
+    font-weight: 500;
+    padding: 10px 4px;
+    min-height: 44px;
+  }
+  .landing-nav-actions a.auth-only button { padding: 7px 12px; }
+
+  /* Hero lebih rapat di bawah nav sticky, CTA jadi tombol lebar penuh
+     yang mudah ditekan, dan kartu grafik tidak terlalu tinggi/curam. */
+  .landing-hero { padding-top: 52px; padding-bottom: 60px; }
+  .hero-cta { flex-direction: column; align-items: stretch; }
+  .hero-cta a:not([hidden]) { display: block; }
+  .hero-cta button { width: 100%; min-height: 44px; }
+  .hero-chart { margin-top: 36px; padding: 14px 12px 6px; }
+  .hero-chart svg { height: 112px; }
+  .landing-section { padding-top: 44px; padding-bottom: 52px; }
+  .closing-cta { padding: 44px 0 56px; }
+}
+
+/* Wider layouts */
+@media (min-width: 640px) {
+  .feature-grid { grid-template-columns: 1fr 1fr; }
+  .steps { grid-template-columns: 1fr 1fr 1fr; gap: 0 24px; }
+  .step { flex-direction: column; gap: 12px; padding: 0; }
+  .step + .step { border-top: none; border-left: 1px solid var(--hairline); padding-left: 24px; }
+}
+@media (min-width: 900px) {
+  .landing-hero { padding-top: 96px; padding-bottom: 88px; }
+}
+
+/* Scroll-linked reveal for feature cards (progressive enhancement) */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .feature-card, .step {
+      animation: landing-rise 1ms linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}
+
+/* Reduced motion: show everything instantly, no loops */
+@media (prefers-reduced-motion: reduce) {
+  .landing-reveal {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+  .hc-line { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+  .hc-dot { opacity: 1; animation: none; }
+  .feature-card { transition: none; }
+  @media (hover: hover) and (pointer: fine) {
+    .feature-card:hover { transform: none; }
+  }
+  .fab, .fab svg, .tx-overlay, .tx-sheet, .cf-sheet { transition: none; }
+  .tx-sheet { transform: none; }
+  .cf-sheet { transform: translateY(-50%); }
+  .fab:active { transform: none; }
+}

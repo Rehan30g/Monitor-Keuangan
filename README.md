@@ -1,4 +1,4 @@
-# Monitor Keuangan
+# UangKu
 
 Aplikasi pencatat keuangan pribadi berbasis web, dibangun **tanpa framework** dan
 **tanpa dependency npm** — murni Node.js (`http`, `node:sqlite`) di sisi server dan

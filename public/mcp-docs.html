@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Panduan MCP - UangKu</title>
+  <meta name="description" content="Cara menghubungkan aplikasi atau agen AI ke UangKu lewat MCP (Model Context Protocol).">
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .docs-shell { max-width: 760px; margin: 0 auto; padding: 0 20px 64px; }
+    .docs-shell, .docs-shell * { user-select: text; -webkit-user-select: text; }
+    .docs-nav {
+      border-bottom: 1px solid var(--hairline);
+      background: var(--bg);
+      position: sticky; top: 0; z-index: 5;
+    }
+    .docs-nav-inner {
+      max-width: 760px; margin: 0 auto; padding: 0 20px;
+      height: 56px; display: flex; align-items: center; justify-content: space-between;
+      user-select: none; -webkit-user-select: none;
+    }
+    .docs-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); }
+    .docs-brand svg { color: var(--accent); }
+    .docs-back { font-size: 0.9rem; color: var(--ink-2); }
+    .docs-hero { padding: 40px 0 8px; }
+    .docs-hero h1 { font-size: 1.9rem; letter-spacing: -0.01em; margin-bottom: 10px; }
+    .docs-hero p { color: var(--ink-2); font-size: 1rem; line-height: 1.6; }
+    .docs-section { padding: 28px 0; border-top: 1px solid var(--hairline); }
+    .docs-section h2 {
+      font-size: 1.05rem; display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    }
+    .docs-step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--surface-2); border: 1px solid var(--hairline);
+      font-size: 0.8rem; font-weight: 600; color: var(--ink-2); flex: none;
+    }
+    .docs-section p, .docs-section li { color: var(--ink-2); font-size: 0.92rem; line-height: 1.65; }
+    .docs-section ul, .docs-section ol { padding-left: 20px; margin: 8px 0; }
+    .docs-section li + li { margin-top: 4px; }
+    .docs-section code {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85em;
+      background: var(--surface-2);
+      border: 1px solid var(--hairline);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--ink);
+    }
+    .docs-code { position: relative; margin: 10px 0; }
+    .docs-code pre {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      background: var(--surface);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 14px 44px 14px 16px;
+      overflow-x: auto;
+      color: var(--ink);
+      margin: 0;
+    }
+    .docs-code pre code { background: none; border: none; padding: 0; }
+    .docs-copy-btn {
+      position: absolute; top: 8px; right: 8px;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--hairline); border-radius: 6px;
+      background: var(--surface-2); color: var(--ink-2);
+      cursor: pointer; user-select: none; -webkit-user-select: none;
+    }
+    .docs-copy-btn:hover { color: var(--ink); }
+    .docs-copy-btn.copied { color: var(--accent); border-color: var(--accent); }
+    .docs-copy-btn svg { width: 14px; height: 14px; }
+    .docs-note {
+      font-size: 0.85rem;
+      color: var(--muted);
+      border-left: 2px solid var(--hairline);
+      padding-left: 10px;
+      margin-top: 10px;
+    }
+    .docs-tool {
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .docs-tool h3 {
+      font-size: 0.9rem;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .docs-tool p { margin-bottom: 6px; }
+    .docs-tool .params { font-size: 0.85rem; }
+    .docs-option-label {
+      display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 6px; user-select: none; -webkit-user-select: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="docs-nav">
+    <div class="docs-nav-inner">
+      <div class="docs-brand">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M16 15h2"/></svg>
+        UangKu
+      </div>
+      <a href="/dashboard" class="docs-back">&larr; Kembali ke Dashboard</a>
+    </div>
+  </header>
+
+  <main class="docs-shell">
+
+    <div class="docs-hero">
+      <h1>Panduan MCP</h1>
+      <p>Hubungkan aplikasi atau agen AI apa pun yang mendukung <strong>MCP (Model Context Protocol)</strong> ke akun UangKu-mu, supaya bisa membaca dan mencatat transaksi keuanganmu secara langsung. MCP adalah standar terbuka — dipakai oleh banyak aplikasi AI, bukan cuma satu produk tertentu. Ada dua cara menghubungkan, tergantung jenis aplikasinya.</p>
+    </div>
+
+    <section class="docs-section">
+      <h2><span class="docs-step-num">1</span> Konektor web (mis. Claude.ai)</h2>
+      <span class="docs-option-label">Paling mudah</span>
+      <p>Aplikasi yang punya menu "Tambah konektor" berbasis web biasanya cuma minta URL server — tanpa kolom token manual. Untuk ini, cukup:</p>
+      <ol>
+        <li>Tempel URL berikut di kolom "URL server MCP" / "Remote MCP server URL":</li>
+      </ol>
+      <div class="docs-code"><pre><code>https://huzky.xyz/mcp</code></pre><button type="button" class="docs-copy-btn" aria-label="Salin">📋</button></div>
+      <ol start="2">
+        <li>Biarkan kolom OAuth Client ID/Secret kosong — server UangKu akan mendaftarkan aplikasi itu secara otomatis.</li>
+        <li>Saat pertama kali dipakai, kamu akan diarahkan untuk login ke UangKu (kalau belum) lalu menyetujui izin akses. Setelah disetujui, koneksi langsung aktif — tidak perlu menyalin token apa pun.</li>
+      </ol>
+      <p class="docs-note">Ini memakai OAuth 2.1 standar. Izin ini bisa dicabut kapan saja tanpa memengaruhi token akses milik aplikasi lain.</p>
+    </section>
+
+    <section class="docs-section">
+      <h2><span class="docs-step-num">2</span> Token akses (Claude Desktop, Claude Code, dll)</h2>
+      <span class="docs-option-label">Client berbasis file konfigurasi</span>
+      <p>Aplikasi yang dikonfigurasi lewat file (bukan lewat menu web) butuh token akses dan URL yang dimasukkan manual.</p>
+      <ol>
+        <li>Buka <strong>Pengaturan &rarr; Autentikasi &rarr; MCP</strong> di dashboard.</li>
+        <li>Klik <strong>"Buat Token Baru"</strong>, beri nama supaya gampang dikenali nanti (mis. "Laptop kerja" atau nama aplikasinya).</li>
+        <li>Token akan ditampilkan <strong>satu kali saja</strong> — salin dan simpan sekarang. Token itu tidak bisa dilihat lagi setelah jendelanya ditutup (kalau lupa, tinggal buat token baru).</li>
+      </ol>
+      <p class="docs-note">Token ini setara password untuk akun MCP-mu — jangan bagikan ke siapa pun. Bisa dicabut kapan saja dari halaman Pengaturan yang sama.</p>
+      <p>Header autentikasi yang dipakai:</p>
+      <div class="docs-code"><pre><code>Authorization: Bearer &lt;token-kamu&gt;</code></pre><button type="button" class="docs-copy-btn" aria-label="Salin">📋</button></div>
+      <p>Contoh konfigurasi bergaya <code>mcpServers</code> di file JSON (pola yang dipakai banyak MCP client):</p>
+      <div class="docs-code"><pre><code>{
+  "mcpServers": {
+    "uangku": {
+      "url": "https://huzky.xyz/mcp",
+      "headers": {
+        "Authorization": "Bearer &lt;token-kamu&gt;"
+      }
+    }
+  }
+}</code></pre><button type="button" class="docs-copy-btn" aria-label="Salin">📋</button></div>
+      <p class="docs-note">Kalau aplikasimu tidak memakai format JSON seperti ini, cari kolom "Remote MCP Server URL" atau semacamnya, lalu isi URL di atas dan sertakan header Authorization dengan token-mu.</p>
+      <p>Kalau kamu memakai agen AI yang bisa membaca instruksi sendiri (mis. Claude Code, atau agen berbasis file konfigurasi lain), agen itu bisa memasang koneksi ini sendiri — lihat <a href="/mcp-skill.md">panduan agent (SKILL.md)</a>. Cukup minta agennya membaca file itu, lalu ia akan tahu apa yang perlu ditanyakan kepadamu.</p>
+    </section>
+
+    <section class="docs-section">
+      <h2><span class="docs-step-num">3</span> Tools yang tersedia</h2>
+
+      <div class="docs-tool">
+        <h3>list_transactions</h3>
+        <p>Membaca daftar transaksi beserta ringkasan saldo, total pemasukan, dan total pengeluaran.</p>
+        <p class="params"><code>jenis</code> (opsional): "masuk" atau "keluar" &middot; <code>cari</code> (opsional): cari teks di keterangan</p>
+      </div>
+
+      <div class="docs-tool">
+        <h3>add_transaction</h3>
+        <p>Mencatat satu transaksi baru.</p>
+        <p class="params"><code>jenis</code> (wajib): "masuk" atau "keluar" &middot; <code>keterangan</code> (wajib) &middot; <code>jumlah</code> (wajib, angka Rupiah bulat positif)</p>
+      </div>
+
+      <div class="docs-tool">
+        <h3>delete_transaction</h3>
+        <p>Menghapus satu transaksi berdasarkan ID (dapatkan ID lewat <code>list_transactions</code> dulu).</p>
+        <p class="params"><code>id</code> (wajib)</p>
+      </div>
+    </section>
+
+    <section class="docs-section">
+      <h2><span class="docs-step-num">4</span> Keamanan</h2>
+      <ul>
+        <li>Setiap token atau izin OAuth cuma bisa mengakses data akun pemiliknya sendiri.</li>
+        <li>Cabut token kapan saja dari Pengaturan — aplikasi yang memakainya langsung kehilangan akses.</li>
+        <li>Buat token terpisah untuk tiap aplikasi, supaya kalau satu perlu dicabut, yang lain tidak ikut terganggu.</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Huzky.xyz &middot; UangKu</p>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.docs-copy-btn').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var code = btn.previousElementSibling.querySelector('code').textContent;
+        try {
+          await navigator.clipboard.writeText(code);
+          btn.classList.add('copied');
+          setTimeout(function () { btn.classList.remove('copied'); }, 1500);
+        } catch (err) {
+          // Clipboard API gagal (mis. browser lama) — biarkan pengguna menyalin manual.
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

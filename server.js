@@ -14,7 +14,23 @@ import {
   handleGetTransactions,
   handleCreateTransaction,
   handleDeleteTransaction,
-  handleTelegramConfirmLink
+  handleTelegramConfirmLink,
+  handleGetTelegramStatus,
+  handleTelegramUnlink,
+  handleUpdateProfile,
+  handleUploadAvatar,
+  handleDeleteAvatar,
+  handleGetAvatar,
+  handleChangePassword,
+  handleForgotPassword,
+  handleResetPassword,
+  handleExportData,
+  handleDeleteAccount,
+  handleRequestEmailChange,
+  handleConfirmEmailChange,
+  handleListTokens,
+  handleCreateToken,
+  handleRevokeToken
 } from './lib/handlers.js';
 import { sendJson } from './lib/http-utils.js';
 
@@ -33,7 +49,8 @@ const MIME_TYPES = {
   '.jpg': 'image/jpeg',
   '.gif': 'image/gif',
   '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon'
+  '.ico': 'image/x-icon',
+  '.md': 'text/markdown; charset=utf-8'
 };
 
 // Route auth POST harus izin method POST; sisanya tetap GET/HEAD saja.
@@ -45,8 +62,23 @@ const AUTH_POST_ROUTES = new Set([
   '/api/logout',
   '/api/transactions',
   '/api/transactions/delete',
-  '/api/telegram/confirm-link'
+  '/api/telegram/confirm-link',
+  '/api/telegram/unlink',
+  '/api/profile',
+  '/api/profile/avatar',
+  '/api/profile/avatar/delete',
+  '/api/profile/password',
+  '/api/forgot-password',
+  '/api/reset-password',
+  '/api/profile/export',
+  '/api/profile/delete',
+  '/api/profile/email/request',
+  '/api/profile/email/confirm',
+  '/api/tokens'
 ]);
+
+// /api/tokens/<id>/revoke — id dinamis, tak bisa masuk Set exact-match di atas.
+const REVOKE_TOKEN_RE = /^\/api\/tokens\/[^/]+\/revoke$/;
 
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -55,7 +87,7 @@ const server = http.createServer(async (req, res) => {
   const isAllowedMethod =
     req.method === 'GET' ||
     req.method === 'HEAD' ||
-    (req.method === 'POST' && AUTH_POST_ROUTES.has(pathname));
+    (req.method === 'POST' && (AUTH_POST_ROUTES.has(pathname) || REVOKE_TOKEN_RE.test(pathname)));
 
   if (!isAllowedMethod) {
     res.writeHead(405, { 'Content-Type': 'text/plain' });
@@ -83,7 +115,12 @@ const server = http.createServer(async (req, res) => {
 
   // Konfigurasi publik untuk frontend (site key Turnstile aman untuk diekspos)
   if (pathname === '/api/config' && req.method === 'GET') {
-    return sendJson(res, 200, { turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '' });
+    return sendJson(res, 200, {
+      turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '',
+      telegramBotUrl: process.env.TELEGRAM_BOT_USERNAME
+        ? `https://t.me/${process.env.TELEGRAM_BOT_USERNAME}`
+        : ''
+    });
   }
 
   // Handle auth API
@@ -116,6 +153,56 @@ const server = http.createServer(async (req, res) => {
   }
   if (pathname === '/api/telegram/confirm-link' && req.method === 'POST') {
     return handleTelegramConfirmLink(req, res);
+  }
+  if (pathname === '/api/telegram/status' && req.method === 'GET') {
+    return handleGetTelegramStatus(req, res);
+  }
+  if (pathname === '/api/telegram/unlink' && req.method === 'POST') {
+    return handleTelegramUnlink(req, res);
+  }
+  if (pathname === '/api/profile' && req.method === 'POST') {
+    return handleUpdateProfile(req, res);
+  }
+  if (pathname === '/api/profile/avatar' && req.method === 'POST') {
+    return handleUploadAvatar(req, res);
+  }
+  if (pathname === '/api/profile/avatar/delete' && req.method === 'POST') {
+    return handleDeleteAvatar(req, res);
+  }
+  if (pathname === '/api/profile/password' && req.method === 'POST') {
+    return handleChangePassword(req, res);
+  }
+  if (pathname === '/api/forgot-password' && req.method === 'POST') {
+    return handleForgotPassword(req, res);
+  }
+  if (pathname === '/api/reset-password' && req.method === 'POST') {
+    return handleResetPassword(req, res);
+  }
+  if (pathname === '/api/profile/export' && req.method === 'POST') {
+    return handleExportData(req, res);
+  }
+  if (pathname === '/api/profile/delete' && req.method === 'POST') {
+    return handleDeleteAccount(req, res);
+  }
+  if (pathname === '/api/profile/email/request' && req.method === 'POST') {
+    return handleRequestEmailChange(req, res);
+  }
+  if (pathname === '/api/profile/email/confirm' && req.method === 'POST') {
+    return handleConfirmEmailChange(req, res);
+  }
+  if (pathname === '/api/tokens' && req.method === 'GET') {
+    return handleListTokens(req, res);
+  }
+  if (pathname === '/api/tokens' && req.method === 'POST') {
+    return handleCreateToken(req, res);
+  }
+  if (req.method === 'POST' && REVOKE_TOKEN_RE.test(pathname)) {
+    const tokenId = pathname.split('/')[3];
+    return handleRevokeToken(req, res, tokenId);
+  }
+  if (pathname.startsWith('/api/avatar/') && req.method === 'GET') {
+    const userId = pathname.slice('/api/avatar/'.length);
+    return handleGetAvatar(req, res, userId);
   }
   if (pathname.startsWith('/api/')) {
     return sendJson(res, 404, { error: 'Not Found' });

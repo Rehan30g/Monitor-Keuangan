@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title data-i18n="doc.dashboard">Dashboard - UangKu</title>
+  <script src="theme.js"></script>
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="app" class="app is-visible">
+
+    <aside class="sidebar">
+      <div class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M16 15h2"/></svg>
+        UangKu
+      </div>
+      <nav aria-label="Navigasi utama" data-i18n-aria="aria.navMain">
+        <button class="nav-item is-active" data-tab="ringkasan">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+          <span data-i18n="nav.ringkasan">Ringkasan</span>
+        </button>
+        <button class="nav-item" data-tab="transaksi">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v13"/><path d="M4 14l3 3 3-3"/><path d="M17 20V7"/><path d="M14 10l3-3 3 3"/></svg>
+          <span data-i18n="nav.transaksi">Transaksi</span>
+        </button>
+        <button class="nav-item" data-tab="laporan">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/></svg>
+          <span data-i18n="nav.laporan">Laporan</span>
+        </button>
+        <button class="nav-item" data-tab="pengaturan">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h10"/><circle cx="17" cy="8" r="2.5"/><path d="M20 16H10"/><circle cx="7" cy="16" r="2.5"/></svg>
+          <span data-i18n="nav.pengaturan">Pengaturan</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <span class="avatar avatar-sm" id="avatar-sidebar"></span>
+          <span id="sidebar-username">&nbsp;</span>
+        </div>
+        <button id="btn-logout" class="nav-item">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          <span data-i18n="nav.logout">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="content-col">
+      <header class="mobile-header">
+        <div class="brand">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M16 15h2"/></svg>
+          UangKu
+        </div>
+        <div class="mobile-user">
+          <span class="avatar avatar-sm" id="avatar-mobile"></span>
+          <span id="mobile-username"></span>
+        </div>
+      </header>
+
+      <main class="main">
+
+        <!-- ===================== Ringkasan ===================== -->
+        <section class="tab is-active" id="tab-ringkasan">
+          <div class="page-head">
+            <h2 data-i18n="nav.ringkasan">Ringkasan</h2>
+            <p id="greeting" data-i18n="greeting.plain">Halo.</p>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-tile">
+              <span class="stat-label" data-i18n="stat.saldo">Saldo</span>
+              <span class="stat-value" id="ringkasan-saldo">Rp 0</span>
+              <span class="stat-sub" id="saldo-sub">&nbsp;</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label"><span class="stat-key key-income"></span><span data-i18n="stat.masuk">Total pemasukan</span></span>
+              <span class="stat-value" id="ringkasan-masuk">Rp 0</span>
+              <span class="stat-sub" id="masuk-sub">&nbsp;</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label"><span class="stat-key key-expense"></span><span data-i18n="stat.keluar">Total pengeluaran</span></span>
+              <span class="stat-value" id="ringkasan-keluar">Rp 0</span>
+              <span class="stat-sub" id="keluar-sub">&nbsp;</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3 data-i18n="chart.trendTitle">Tren saldo</h3>
+              <span class="card-note" data-i18n="chart.trendNote">Saldo kumulatif per hari</span>
+            </div>
+            <div class="chart-wrap" id="chart-trend"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3 data-i18n="recent.title">Transaksi terbaru</h3>
+              <a href="#" class="link-more" id="link-semua-transaksi" data-i18n="recent.viewAll">Lihat semua</a>
+            </div>
+            <ul class="recent-list" id="recent-list"></ul>
+          </div>
+        </section>
+
+        <!-- ===================== Transaksi ===================== -->
+        <section class="tab" id="tab-transaksi">
+          <div class="page-head">
+            <h2 data-i18n="nav.transaksi">Transaksi</h2>
+            <p data-i18n="tx.sub">Catat dan kelola pemasukan &amp; pengeluaran.</p>
+          </div>
+
+          <div class="card">
+            <div class="tx-toolbar">
+              <div class="search-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                <input type="search" id="tx-search" placeholder="Cari keterangan&hellip;" data-i18n-placeholder="tx.searchPh" aria-label="Cari transaksi" data-i18n-aria="aria.cariTx">
+              </div>
+              <div class="segmented" role="group" aria-label="Filter jenis" data-i18n-aria="aria.filterJenis">
+                <button type="button" class="is-active" data-filter="semua" data-i18n="filter.semua">Semua</button>
+                <button type="button" data-filter="masuk" data-i18n="tx.masuk">Pemasukan</button>
+                <button type="button" data-filter="keluar" data-i18n="tx.keluar">Pengeluaran</button>
+              </div>
+            </div>
+            <p class="tx-count" id="tx-count"></p>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="th.waktu">Waktu</th>
+                    <th data-i18n="tx.jenis">Jenis</th>
+                    <th data-i18n="tx.ket">Keterangan</th>
+                    <th class="num" data-i18n="th.jumlah">Jumlah</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="tabel-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== Laporan ===================== -->
+        <section class="tab" id="tab-laporan">
+          <div class="page-head">
+            <h2 data-i18n="nav.laporan">Laporan</h2>
+            <p data-i18n="lap.sub">Rekap bulanan dari riwayat transaksi.</p>
+          </div>
+
+          <div class="laporan-grid">
+            <div class="stat-tile">
+              <span class="stat-label"><span class="stat-key key-income"></span><span data-i18n="lap.avgMasuk">Rata-rata pemasukan / bulan</span></span>
+              <span class="stat-value" id="lap-avg-masuk">Rp 0</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label"><span class="stat-key key-expense"></span><span data-i18n="lap.avgKeluar">Rata-rata pengeluaran / bulan</span></span>
+              <span class="stat-value" id="lap-avg-keluar">Rp 0</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label" data-i18n="lap.terbesar">Transaksi terbesar</span>
+              <span class="stat-value" id="lap-terbesar">Rp 0</span>
+              <span class="stat-sub" id="lap-terbesar-sub">&nbsp;</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3 data-i18n="lap.chartTitle">Pemasukan vs pengeluaran per bulan</h3>
+              <ul class="chart-legend">
+                <li><span class="legend-swatch swatch-income"></span><span data-i18n="tx.masuk">Pemasukan</span></li>
+                <li><span class="legend-swatch swatch-expense"></span><span data-i18n="tx.keluar">Pengeluaran</span></li>
+              </ul>
+            </div>
+            <div class="chart-wrap" id="chart-bulanan"></div>
+            <details class="table-view">
+              <summary data-i18n="lap.showTable">Tampilkan sebagai tabel</summary>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th data-i18n="th.bulan">Bulan</th>
+                      <th class="num" data-i18n="tx.masuk">Pemasukan</th>
+                      <th class="num" data-i18n="tx.keluar">Pengeluaran</th>
+                      <th class="num" data-i18n="th.selisih">Selisih</th>
+                    </tr>
+                  </thead>
+                  <tbody id="lap-tabel-body"></tbody>
+                </table>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <!-- ===================== Pengaturan ===================== -->
+        <section class="tab" id="tab-pengaturan">
+          <div class="page-head">
+            <h2 data-i18n="nav.pengaturan">Pengaturan</h2>
+            <p data-i18n="set.sub">Akun dan preferensi tampilan.</p>
+          </div>
+
+          <!-- Header profil: selalu tampil di atas sub-tab -->
+          <div class="card profile-header">
+            <div class="profile-hero">
+              <span class="avatar avatar-xl" id="avatar-settings"></span>
+              <div class="profile-ident">
+                <div class="profile-nama" id="profil-nama">&ndash;</div>
+                <div class="profile-username" id="profil-username"></div>
+              </div>
+              <div class="profile-actions">
+                <label class="btn-secondary btn-upload" for="avatar-input">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                  <span data-i18n="set.gantiFoto">Ganti foto</span>
+                </label>
+                <input type="file" id="avatar-input" accept="image/png,image/jpeg,image/webp" hidden>
+                <button type="button" id="btn-avatar-hapus" class="btn-danger btn-icon" hidden title="Hapus foto" aria-label="Hapus foto" data-i18n-title="set.hapusFoto" data-i18n-aria="set.hapusFoto">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 13h10l1-13"/></svg>
+                </button>
+              </div>
+            </div>
+            <p id="avatar-msg" class="form-msg" role="status"></p>
+            <form id="form-nama" class="profile-form">
+              <div class="form-group">
+                <label for="nama-panggilan" data-i18n="set.nama">Nama panggilan</label>
+                <input type="text" id="nama-panggilan" name="displayName" placeholder="mis. Kak Aldrick" data-i18n-placeholder="set.namaPh" maxlength="40">
+              </div>
+              <button type="submit" data-i18n="set.simpan">Simpan</button>
+            </form>
+            <p id="nama-msg" class="form-msg" role="status"></p>
+          </div>
+
+          <!-- Navigasi sub-tab Pengaturan -->
+          <nav class="subtabs" aria-label="Bagian pengaturan" data-i18n-aria="aria.subtabs">
+            <button type="button" class="is-active" data-subtab="akun" data-i18n="set.akun">Akun</button>
+            <button type="button" data-subtab="tampilan" data-i18n="set.tampilan">Tampilan</button>
+            <button type="button" data-subtab="autentikasi" data-i18n="set.autentikasi">Autentikasi</button>
+            <button type="button" data-subtab="tentang" data-i18n="set.tentang">Tentang</button>
+          </nav>
+
+          <!-- Sub-tab: Akun -->
+          <div class="subtab-panel is-active" id="subtab-akun">
+            <div class="card">
+              <div class="card-head"><h3 data-i18n="set.infoAkun">Informasi akun</h3></div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label" data-i18n="auth.username">Username</div>
+                  <div class="settings-desc" data-i18n="set.akunDesc">Akun yang sedang login.</div>
+                </div>
+                <span class="settings-value" id="setting-username">&ndash;</span>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label" data-i18n="set.txTercatat">Transaksi tercatat</div>
+                </div>
+                <span class="settings-value" id="setting-tx-count">0</span>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label" data-i18n="auth.email">Email</div>
+                  <div class="settings-desc" data-i18n="set.emailDesc">Email akun untuk verifikasi dan notifikasi.</div>
+                </div>
+                <div class="settings-inline">
+                  <span class="settings-value" id="setting-email">&ndash;</span>
+                  <button type="button" id="btn-ganti-email" class="btn-secondary" data-i18n="set.ubah">Ubah</button>
+                </div>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label" data-i18n="set.sesi">Sesi</div>
+                  <div class="settings-desc" data-i18n="set.sesiDesc">Keluar dari perangkat ini.</div>
+                </div>
+                <button type="button" id="btn-logout-settings" class="btn-danger" data-i18n="nav.logout">Logout</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h3 data-i18n="set.kataSandi">Kata sandi</h3></div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label" data-i18n="set.gantiPw">Ganti password</div>
+                  <div class="settings-desc" data-i18n="set.gantiPwDesc">Perbarui password untuk login.</div>
+                </div>
+                <button type="button" id="btn-ganti-password" class="btn-secondary" data-i18n="set.gantiPw">Ganti password</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><h3 data-i18n="set.unduhData">Unduh data Anda</h3></div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label" data-i18n="set.unduhLabel">Ekspor transaksi</div>
+                  <div class="settings-desc" data-i18n="set.unduhDesc">Kirim salinan seluruh transaksi kamu (CSV) ke email.</div>
+                </div>
+                <button type="button" id="btn-export-data" class="btn-secondary" data-i18n="set.unduhBtn">Kirim ke email</button>
+              </div>
+              <p id="export-msg" class="form-msg" role="status"></p>
+            </div>
+
+            <div class="card card-danger">
+              <div class="card-head"><h3 data-i18n="set.redZone">Zona merah</h3></div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label" data-i18n="set.hapusAkun">Hapus akun</div>
+                  <div class="settings-desc" data-i18n="set.hapusAkunDesc">Menghapus akun dan seluruh data secara permanen. Tidak bisa dibatalkan.</div>
+                </div>
+                <button type="button" id="btn-hapus-akun" class="btn-danger" data-i18n="set.hapusAkun">Hapus akun</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-tab: Tampilan -->
+          <div class="subtab-panel" id="subtab-tampilan">
+          <div class="card">
+            <div class="card-head"><h3 data-i18n="set.tampilan">Tampilan</h3></div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label" data-i18n="set.tema">Tema</div>
+              </div>
+              <div class="segmented" role="group" aria-label="Pilih tema" data-i18n-aria="aria.pilihTema">
+                <button type="button" data-theme-choice="light" data-i18n="theme.terang">Terang</button>
+                <button type="button" data-theme-choice="dark" data-i18n="theme.gelap">Gelap</button>
+                <button type="button" data-theme-choice="system" data-i18n="theme.sistem">Sistem</button>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label" data-i18n="set.bahasa">Bahasa</div>
+              </div>
+              <div class="segmented" role="group" aria-label="Pilih bahasa" data-i18n-aria="aria.pilihBahasa">
+                <button type="button" data-lang-choice="id">Indonesia</button>
+                <button type="button" data-lang-choice="en">English</button>
+                <button type="button" data-lang-choice="zh">中文</button>
+              </div>
+            </div>
+          </div>
+          </div>
+
+          <!-- Sub-tab: Autentikasi -->
+          <div class="subtab-panel" id="subtab-autentikasi">
+          <div class="card">
+            <div class="card-head"><h3>Telegram</h3></div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label" data-i18n="set.tgBot">Bot Telegram</div>
+                <div class="settings-desc" data-i18n="set.tgDesc">Catat transaksi lewat foto struk atau teks di Telegram.</div>
+              </div>
+              <a id="telegram-bot-link" href="https://t.me/" target="_blank" rel="noopener"><button type="button" class="btn-secondary" data-i18n="set.bukaBot">Buka Bot</button></a>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label" data-i18n="set.statusKoneksi">Status koneksi</div>
+                <div class="settings-desc" id="telegram-status-desc" data-i18n="tg.checking">Memeriksa status&hellip;</div>
+              </div>
+              <button type="button" id="btn-telegram-unlink" class="btn-danger" hidden data-i18n="set.putuskan">Putuskan</button>
+            </div>
+          </div>
+
+          <!-- MCP (Model Context Protocol) — akses transaksi untuk aplikasi/agen AI -->
+          <div class="card" id="card-pat">
+            <div class="card-head"><h3 data-i18n="set.patTitle">MCP</h3></div>
+            <p class="settings-desc mcp-intro" data-i18n="set.patDesc">Hubungkan aplikasi atau agen AI yang mendukung MCP (Model Context Protocol) supaya bisa membaca dan mencatat transaksimu.</p>
+            <a href="/mcp-docs" class="mcp-docs-link" data-i18n="set.patDocsLink">Lihat panduan lengkap →</a>
+            <a href="/mcp-skill.md" class="mcp-docs-link" data-i18n="set.patSkillLink">Panduan untuk AI agent (SKILL.md) →</a>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label" data-i18n="set.patUrlLabel">URL server MCP</div>
+              </div>
+              <div class="settings-inline">
+                <code class="mcp-url" id="mcp-url">https://huzky.xyz/mcp</code>
+                <button type="button" class="btn-secondary" id="btn-mcp-url-copy" data-i18n="set.patSalin">Salin</button>
+              </div>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label" data-i18n="set.patLabel">Token akses</div>
+                <div class="settings-desc" data-i18n="set.patLabelDesc">Setiap aplikasi butuh token sendiri untuk terhubung.</div>
+              </div>
+              <button type="button" class="btn-secondary" id="btn-pat-buat" data-i18n="set.patBuat">Buat Token Baru</button>
+            </div>
+            <ul class="pat-list" id="pat-list" hidden></ul>
+            <p class="pat-empty" id="pat-empty" data-i18n="set.patKosong">Belum ada token dibuat.</p>
+          </div>
+          </div>
+
+          <!-- Sub-tab: Tentang -->
+          <div class="subtab-panel" id="subtab-tentang">
+            <div class="card">
+              <div class="card-head"><h3 data-i18n="set.tentang">Tentang</h3></div>
+              <p class="about-desc" data-i18n="about.desc">Pencatat keuangan pribadi yang sederhana.</p>
+              <div class="settings-row">
+                <div class="settings-label" data-i18n="about.madeBy">Dibuat oleh</div>
+                <span class="settings-value">Rehan30g</span>
+              </div>
+              <div class="settings-row">
+                <div class="settings-label" data-i18n="about.source">Kode sumber</div>
+                <a class="about-link" href="https://github.com/Rehan30g/Monitor-Keuangan" target="_blank" rel="noopener">GitHub</a>
+              </div>
+              <div class="settings-row">
+                <div class="settings-label" data-i18n="about.versi">Versi</div>
+                <span class="settings-value">1.0.0</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== FAB tambah transaksi: hidup di luar .tab agar tampil di
+             Ringkasan, Transaksi, dan Laporan (visibilitas diatur bukaTab) ===== -->
+        <button type="button" class="fab" id="fab-tambah" aria-label="Tambah transaksi" data-i18n-aria="tx.add" aria-expanded="false" aria-controls="tx-sheet" aria-haspopup="dialog">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+
+        <div class="tx-overlay" id="tx-overlay" hidden></div>
+        <div class="tx-sheet" id="tx-sheet" role="dialog" aria-modal="true" aria-labelledby="tx-sheet-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="tx-sheet-title" data-i18n="tx.add">Tambah transaksi</h3>
+            <button type="button" class="tx-sheet-close" id="tx-sheet-close" aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <form id="form-transaksi" class="tx-form">
+            <input type="hidden" name="jenis" id="tx-jenis" value="masuk">
+            <div class="segmented tx-jenis-seg" id="tx-jenis-seg" role="group" aria-label="Jenis" data-i18n-aria="tx.jenis">
+              <button type="button" class="is-active" data-jenis="masuk" aria-pressed="true" data-i18n="tx.masuk">Pemasukan</button>
+              <button type="button" data-jenis="keluar" aria-pressed="false" data-i18n="tx.keluar">Pengeluaran</button>
+            </div>
+            <div class="form-group">
+              <label for="tx-keterangan" data-i18n="tx.ket">Keterangan</label>
+              <input type="text" id="tx-keterangan" name="keterangan" placeholder="contoh: Gaji, Belanja" data-i18n-placeholder="tx.ketPh" maxlength="120">
+            </div>
+            <div class="form-group">
+              <label for="tx-jumlah" data-i18n="tx.jumlah">Jumlah (Rp)</label>
+              <input type="text" id="tx-jumlah" name="jumlah" placeholder="50.000" inputmode="numeric" required>
+            </div>
+            <button type="submit" data-i18n="tx.submit">Tambah</button>
+          </form>
+          <div id="pesan-error" class="form-msg" role="status"></div>
+        </div>
+
+        <!-- ===== Jendela konfirmasi melayang (pola visual sama dengan tx-sheet,
+             instance terpisah): logout, ekspor, ganti password, ganti email,
+             hapus akun ===== -->
+        <div class="tx-overlay" id="cf-overlay" hidden></div>
+
+        <div class="cf-sheet" id="cf-logout" role="dialog" aria-modal="true" aria-labelledby="cf-logout-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-logout-title" data-i18n="nav.logout">Logout</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <p class="cf-desc" data-i18n="cf.logoutMsg">Yakin ingin keluar dari perangkat ini?</p>
+          <div class="cf-actions">
+            <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+            <button type="button" class="btn-danger" id="btn-logout-confirm" data-i18n="nav.logout">Logout</button>
+          </div>
+        </div>
+
+        <div class="cf-sheet" id="cf-export" role="dialog" aria-modal="true" aria-labelledby="cf-export-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-export-title" data-i18n="set.unduhData">Unduh data Anda</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <p class="cf-desc" data-i18n="cf.exportMsg">Kirim salinan seluruh transaksi kamu (CSV) ke email akunmu?</p>
+          <div class="cf-actions">
+            <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+            <button type="button" id="btn-export-confirm" data-i18n="set.unduhBtn">Kirim ke email</button>
+          </div>
+        </div>
+
+        <div class="cf-sheet" id="cf-password" role="dialog" aria-modal="true" aria-labelledby="cf-password-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-password-title" data-i18n="set.gantiPw">Ganti password</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <form id="form-password" class="tx-form">
+            <div class="form-group">
+              <label for="current-password-set" data-i18n="set.pwSaatIni">Password saat ini</label>
+              <input type="password" id="current-password-set" name="currentPassword" autocomplete="current-password" required>
+            </div>
+            <div class="form-group">
+              <label for="new-password-set" data-i18n="set.pwBaru">Password baru</label>
+              <input type="password" id="new-password-set" name="newPassword" autocomplete="new-password" required minlength="8">
+            </div>
+            <div class="cf-actions">
+              <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+              <button type="submit" data-i18n="set.simpan">Simpan</button>
+            </div>
+          </form>
+          <p id="password-msg" class="form-msg" role="status"></p>
+        </div>
+
+        <div class="cf-sheet" id="cf-email" role="dialog" aria-modal="true" aria-labelledby="cf-email-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-email-title" data-i18n="set.gantiEmail">Ganti email</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <form id="form-email-ganti" class="tx-form">
+            <p class="cf-desc" data-i18n="set.emailStep1">Kode verifikasi akan dikirim ke email baru kamu.</p>
+            <div class="form-group">
+              <label for="email-baru" data-i18n="set.emailBaru">Email baru</label>
+              <input type="email" id="email-baru" name="newEmail" autocomplete="email" required>
+            </div>
+            <div class="form-group">
+              <label for="email-password" data-i18n="set.pwSaatIni">Password saat ini</label>
+              <input type="password" id="email-password" name="currentPassword" autocomplete="current-password" required>
+            </div>
+            <div class="cf-actions">
+              <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+              <button type="submit" data-i18n="set.kirimKode">Kirim kode</button>
+            </div>
+          </form>
+          <form id="form-email-kode" class="tx-form" hidden>
+            <p class="cf-desc" data-i18n="set.emailStep2">Masukkan kode 6 digit yang dikirim ke email baru kamu.</p>
+            <div class="form-group">
+              <label for="email-kode" data-i18n="auth.verify.label">Kode Verifikasi</label>
+              <input type="text" id="email-kode" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>
+            </div>
+            <div class="cf-actions">
+              <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+              <button type="submit" data-i18n="auth.verify.btn">Verifikasi</button>
+            </div>
+          </form>
+          <p id="email-msg" class="form-msg" role="status"></p>
+        </div>
+
+        <div class="cf-sheet cf-danger" id="cf-hapus" role="dialog" aria-modal="true" aria-labelledby="cf-hapus-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-hapus-title" data-i18n="set.hapusAkun">Hapus akun</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <p class="cf-desc" data-i18n="set.hapusAkunConfirm">Yakin ingin menghapus akun ini secara permanen? Semua data akan hilang dan tidak bisa dikembalikan.</p>
+          <form id="form-hapus-akun" class="tx-form">
+            <div class="form-group">
+              <label for="hapus-akun-password" data-i18n="set.hapusAkunLabel">Konfirmasi password</label>
+              <input type="password" id="hapus-akun-password" name="password" autocomplete="current-password" required>
+            </div>
+            <div class="cf-actions">
+              <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+              <button type="submit" class="btn-danger" data-i18n="set.hapusAkunBtn">Hapus akun saya</button>
+            </div>
+          </form>
+          <p id="hapus-akun-msg" class="form-msg" role="status"></p>
+        </div>
+
+        <div class="cf-sheet" id="cf-pat-buat" role="dialog" aria-modal="true" aria-labelledby="cf-pat-buat-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-pat-buat-title" data-i18n="set.patBuatTitle">Buat token baru</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <form id="form-pat-buat" class="tx-form">
+            <p class="cf-desc" data-i18n="set.patBuatMsg">Beri nama token ini agar mudah dikenali nanti, mis. alat atau agen AI mana yang memakainya.</p>
+            <div class="form-group">
+              <label for="pat-label" data-i18n="set.patLabelInput">Nama token</label>
+              <input type="text" id="pat-label" name="label" placeholder="mis. Aplikasi AI di laptop kerja" data-i18n-placeholder="set.patLabelPh" maxlength="60" required>
+            </div>
+            <div class="cf-actions">
+              <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+              <button type="submit" data-i18n="set.patBuatBtn">Buat Token</button>
+            </div>
+          </form>
+          <p id="pat-buat-msg" class="form-msg" role="status"></p>
+        </div>
+
+        <div class="cf-sheet" id="cf-pat-reveal" role="dialog" aria-modal="true" aria-labelledby="cf-pat-reveal-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-pat-reveal-title" data-i18n="set.patRevealTitle">Token dibuat</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <p class="cf-desc cf-desc-warn" data-i18n="set.patRevealWarn">Simpan sekarang — token ini tidak akan ditampilkan lagi setelah ditutup.</p>
+          <div class="pat-reveal-box">
+            <code id="pat-reveal-value">uk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>
+            <button type="button" class="btn-secondary" id="btn-pat-copy" data-i18n="set.patSalin">Salin</button>
+          </div>
+          <p id="pat-copy-msg" class="form-msg" role="status" aria-live="polite"></p>
+          <div class="cf-actions">
+            <button type="button" data-cf-close data-i18n="set.patSelesai">Selesai, sudah disimpan</button>
+          </div>
+        </div>
+
+        <div class="cf-sheet" id="cf-pat-cabut" role="dialog" aria-modal="true" aria-labelledby="cf-pat-cabut-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-pat-cabut-title" data-i18n="set.patCabutTitle">Cabut token</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <p class="cf-desc" id="pat-cabut-msg">Yakin ingin mencabut token ini? Alat yang memakainya akan langsung kehilangan akses.</p>
+          <div class="cf-actions">
+            <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+            <button type="button" class="btn-danger" id="btn-pat-cabut-confirm" data-i18n="set.patCabutBtn">Cabut token</button>
+          </div>
+        </div>
+
+      </main>
+
+      <nav class="tabbar" aria-label="Navigasi bawah" data-i18n-aria="aria.navBottom">
+        <button class="nav-item is-active" data-tab="ringkasan">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+          <span data-i18n="nav.ringkasan">Ringkasan</span>
+        </button>
+        <button class="nav-item" data-tab="transaksi">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v13"/><path d="M4 14l3 3 3-3"/><path d="M17 20V7"/><path d="M14 10l3-3 3 3"/></svg>
+          <span data-i18n="nav.transaksi">Transaksi</span>
+        </button>
+        <button class="nav-item" data-tab="laporan">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/></svg>
+          <span data-i18n="nav.laporan">Laporan</span>
+        </button>
+        <button class="nav-item" data-tab="pengaturan">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h10"/><circle cx="17" cy="8" r="2.5"/><path d="M20 16H10"/><circle cx="7" cy="16" r="2.5"/></svg>
+          <span data-i18n="nav.pengaturan">Pengaturan</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
