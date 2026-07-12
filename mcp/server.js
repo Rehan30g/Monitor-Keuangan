@@ -300,27 +300,66 @@ const provider = {
 // (stateless) dan tools-nya menutup atas userId hasil autentikasi.
 // -------------------------------------------------------------------------
 
+const PAGE_SIZE = 10;
+
 function buildServerForUser(userId) {
-  const server = new McpServer({ name: 'uangku-mcp', version: '1.0.0' });
+  const server = new McpServer(
+    { name: 'uangku-mcp', version: '1.0.0' },
+    {
+      instructions:
+        'Server MCP UangKu — akses transaksi keuangan pengguna. PENTING soal efisiensi token: ' +
+        'add_transaction dan delete_transaction TIDAK mengembalikan seluruh riwayat transaksi, hanya ' +
+        'konfirmasi ringkas + ringkasan saldo. Jangan panggil list_transactions secara otomatis setelah ' +
+        'tiap add/delete — hanya panggil kalau pengguna memang minta melihat daftar transaksi, atau kamu ' +
+        'benar-benar perlu memverifikasi sesuatu yang tidak bisa dipastikan dari konfirmasi yang sudah ada. ' +
+        'list_transactions mengembalikan hasil per halaman (10 transaksi terbaru per halaman) untuk hemat ' +
+        'token — pakai parameter "page" untuk mengambil halaman berikutnya kalau memang perlu, jangan ' +
+        'mengambil semua halaman sekaligus kalau tidak diminta.'
+    }
+  );
 
   server.registerTool('list_transactions', {
     title: 'Daftar Transaksi',
-    description: 'Baca daftar transaksi keuangan pengguna beserta ringkasan saldo/pemasukan/pengeluaran. Bisa difilter jenis dan dicari berdasarkan keterangan.',
+    description:
+      'Baca daftar transaksi keuangan pengguna beserta ringkasan saldo/pemasukan/pengeluaran, dipaginasi ' +
+      `${PAGE_SIZE} transaksi terbaru per halaman untuk hemat token. Bisa difilter jenis dan dicari ` +
+      'berdasarkan keterangan. Panggil ini hanya kalau pengguna minta lihat transaksi atau kamu benar-benar ' +
+      'perlu memverifikasi data — jangan dipanggil otomatis setelah add/delete.',
     inputSchema: {
       jenis: z.enum(['masuk', 'keluar']).optional().describe('Filter jenis transaksi: masuk (pemasukan) atau keluar (pengeluaran). Kosongkan untuk semua.'),
-      cari: z.string().optional().describe('Cari transaksi yang keterangannya mengandung teks ini (case-insensitive).')
+      cari: z.string().optional().describe('Cari transaksi yang keterangannya mengandung teks ini (case-insensitive).'),
+      page: z.number().int().positive().optional().describe(`Nomor halaman, dimulai dari 1 (${PAGE_SIZE} transaksi terbaru per halaman). Default 1.`)
     }
-  }, async ({ jenis, cari }) => {
+  }, async ({ jenis, cari, page }) => {
     const data = getTransactions(userId);
     let rows = data.transaksi;
     if (jenis) rows = rows.filter((t) => t.jenis === jenis);
     if (cari) { const q = cari.toLowerCase(); rows = rows.filter((t) => t.keterangan.toLowerCase().includes(q)); }
-    return { content: [{ type: 'text', text: JSON.stringify({ ringkasan: data.ringkasan, transaksi: rows }, null, 2) }] };
+
+    const totalItems = rows.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+    const currentPage = Math.min(Math.max(page || 1, 1), totalPages);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageRows = rows.slice(start, start + PAGE_SIZE);
+
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          ringkasan: data.ringkasan,
+          halaman: { saatIni: currentPage, totalHalaman: totalPages, totalTransaksi: totalItems, adaHalamanBerikutnya: currentPage < totalPages },
+          transaksi: pageRows
+        }, null, 2)
+      }]
+    };
   });
 
   server.registerTool('add_transaction', {
     title: 'Tambah Transaksi',
-    description: 'Catat satu transaksi keuangan baru (pemasukan atau pengeluaran) ke laporan UangKu pengguna.',
+    description:
+      'Catat satu transaksi keuangan baru (pemasukan atau pengeluaran) ke laporan UangKu pengguna. ' +
+      'Mengembalikan konfirmasi ringkas + ringkasan saldo saja (bukan seluruh riwayat transaksi) — ' +
+      'jangan panggil list_transactions sesudahnya kecuali pengguna minta melihat daftar.',
     inputSchema: {
       jenis: z.enum(['masuk', 'keluar']).describe('masuk = pemasukan, keluar = pengeluaran'),
       keterangan: z.string().min(1).max(120).describe('Deskripsi singkat transaksi, mis. "Gaji Bulanan" atau "Belanja Indomaret"'),
@@ -329,17 +368,31 @@ function buildServerForUser(userId) {
   }, async ({ jenis, keterangan, jumlah }) => {
     const result = addTransaction(userId, jenis, keterangan, String(jumlah));
     if (result.error) return { content: [{ type: 'text', text: `Gagal: ${result.error}` }], isError: true };
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    const transaksiBaru = result.transaksi[0]; // baris terbaru — hasil query terurut id DESC
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({ berhasil: true, transaksi_baru: transaksiBaru, ringkasan: result.ringkasan }, null, 2)
+      }]
+    };
   });
 
   server.registerTool('delete_transaction', {
     title: 'Hapus Transaksi',
-    description: 'Hapus satu transaksi milik pengguna berdasarkan ID-nya (dapatkan ID lewat list_transactions terlebih dulu).',
+    description:
+      'Hapus satu transaksi milik pengguna berdasarkan ID-nya (dapatkan ID lewat list_transactions ' +
+      'terlebih dulu). Mengembalikan konfirmasi ringkas + ringkasan saldo saja (bukan seluruh riwayat) — ' +
+      'jangan panggil list_transactions sesudahnya kecuali pengguna minta melihat daftar.',
     inputSchema: { id: z.number().int().describe('ID transaksi yang akan dihapus') }
   }, async ({ id }) => {
     const result = deleteTransaction(userId, id);
     if (result.error) return { content: [{ type: 'text', text: `Gagal: ${result.error}` }], isError: true };
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({ berhasil: true, id_dihapus: id, ringkasan: result.ringkasan }, null, 2)
+      }]
+    };
   });
 
   return server;
