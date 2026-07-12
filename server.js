@@ -9,6 +9,7 @@ import {
   handleVerifyEmail,
   handleResendCode,
   handleLogin,
+  handleLoginMfa,
   handleLogout,
   handleMe,
   handleGetTransactions,
@@ -30,7 +31,12 @@ import {
   handleConfirmEmailChange,
   handleListTokens,
   handleCreateToken,
-  handleRevokeToken
+  handleRevokeToken,
+  handleMfaStatus,
+  handleMfaEnableStart,
+  handleMfaEnableConfirm,
+  handleMfaDisable,
+  handleMfaRegenerateBackup
 } from './lib/handlers.js';
 import { sendJson } from './lib/http-utils.js';
 
@@ -59,6 +65,7 @@ const AUTH_POST_ROUTES = new Set([
   '/api/verify-email',
   '/api/resend-code',
   '/api/login',
+  '/api/login/mfa',
   '/api/logout',
   '/api/transactions',
   '/api/transactions/delete',
@@ -74,7 +81,11 @@ const AUTH_POST_ROUTES = new Set([
   '/api/profile/delete',
   '/api/profile/email/request',
   '/api/profile/email/confirm',
-  '/api/tokens'
+  '/api/tokens',
+  '/api/mfa/enable/start',
+  '/api/mfa/enable/confirm',
+  '/api/mfa/disable',
+  '/api/mfa/backup-codes'
 ]);
 
 // /api/tokens/<id>/revoke — id dinamis, tak bisa masuk Set exact-match di atas.
@@ -135,6 +146,9 @@ const server = http.createServer(async (req, res) => {
   }
   if (pathname === '/api/login' && req.method === 'POST') {
     return handleLogin(req, res);
+  }
+  if (pathname === '/api/login/mfa' && req.method === 'POST') {
+    return handleLoginMfa(req, res);
   }
   if (pathname === '/api/logout' && req.method === 'POST') {
     return handleLogout(req, res);
@@ -199,6 +213,21 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && REVOKE_TOKEN_RE.test(pathname)) {
     const tokenId = pathname.split('/')[3];
     return handleRevokeToken(req, res, tokenId);
+  }
+  if (pathname === '/api/mfa/status' && req.method === 'GET') {
+    return handleMfaStatus(req, res);
+  }
+  if (pathname === '/api/mfa/enable/start' && req.method === 'POST') {
+    return handleMfaEnableStart(req, res);
+  }
+  if (pathname === '/api/mfa/enable/confirm' && req.method === 'POST') {
+    return handleMfaEnableConfirm(req, res);
+  }
+  if (pathname === '/api/mfa/disable' && req.method === 'POST') {
+    return handleMfaDisable(req, res);
+  }
+  if (pathname === '/api/mfa/backup-codes' && req.method === 'POST') {
+    return handleMfaRegenerateBackup(req, res);
   }
   if (pathname.startsWith('/api/avatar/') && req.method === 'GET') {
     const userId = pathname.slice('/api/avatar/'.length);

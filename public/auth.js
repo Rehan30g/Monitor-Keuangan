@@ -90,7 +90,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function finishLogin() {
+    const redirectTo = sessionStorage.getItem('postLoginRedirect');
+    sessionStorage.removeItem('postLoginRedirect');
+    window.location.href = redirectTo || '/dashboard';
+  }
+
   if (loginForm) {
+    const mfaForm = document.getElementById('mfa-form');
+    const mfaError = document.getElementById('mfa-error');
+    const loginAlt = document.getElementById('login-alt');
+    let mfaChallengeId = null;
+
+    function showMfaError(message) {
+      if (mfaError) mfaError.textContent = message;
+    }
+
+    // Beralih dari form login ke langkah kedua (kode MFA).
+    function showMfaStep(challengeId) {
+      mfaChallengeId = challengeId;
+      loginForm.hidden = true;
+      if (loginAlt) loginAlt.hidden = true;
+      const turnstile = document.getElementById('turnstile-container');
+      if (turnstile) turnstile.hidden = true;
+      mfaForm.hidden = false;
+      const codeInput = document.getElementById('mfa-code');
+      if (codeInput) codeInput.focus();
+    }
+
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       showError('');
@@ -99,10 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const captchaToken = getCaptchaToken();
 
       const { ok, status, data } = await submitAuth('/api/login', { username, password, captchaToken });
-      if (ok) {
-        const redirectTo = sessionStorage.getItem('postLoginRedirect');
-        sessionStorage.removeItem('postLoginRedirect');
-        window.location.href = redirectTo || '/dashboard';
+      if (ok && data.mfaRequired) {
+        showMfaStep(data.challengeId);
+      } else if (ok) {
+        finishLogin();
       } else if (status === 403 && data.needsVerification) {
         goToVerify(data.verifyToken, data.error);
       } else {
@@ -110,6 +137,20 @@ document.addEventListener('DOMContentLoaded', () => {
         resetCaptcha();
       }
     });
+
+    if (mfaForm) {
+      mfaForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showMfaError('');
+        const code = document.getElementById('mfa-code').value.trim();
+        const { ok, data } = await submitAuth('/api/login/mfa', { challengeId: mfaChallengeId, code });
+        if (ok) {
+          finishLogin();
+        } else {
+          showMfaError(data.error ? window.tServer(data.error) : window.t('auth.mfaFail'));
+        }
+      });
+    }
   }
 
   if (verifyForm) {

@@ -13,6 +13,10 @@ untuk mencatat transaksi cukup dengan kirim foto struk atau catatan teks.
   dengan proteksi brute-force (lockout otomatis) dan notifikasi email setiap ada
   login baru, lupa/reset password lewat email, dan ganti email in-app (dengan
   masking di tampilan, mis. `re**@gmail.com`).
+- **MFA (verifikasi dua langkah)**: TOTP standar (RFC 6238, kompatibel Google
+  Authenticator/Authy/1Password dkk) diimplementasikan tanpa dependency
+  eksternal, plus 10 kode cadangan sekali pakai. Aktivasi/nonaktivasi selalu
+  butuh password + kode, dan tiap perubahan status mengirim email notifikasi.
 - **Captcha**: Cloudflare Turnstile di form login & register.
 - **Dashboard**: tab Ringkasan, Transaksi, Laporan, dan Pengaturan — responsif di
   desktop (sidebar) maupun mobile (bottom tab bar + floating action button),
@@ -75,6 +79,8 @@ lib/
   api-tokens.js           # Personal access token untuk MCP (hash tersimpan, bukan raw token)
   oauth-store.js          # Data access OAuth: klien terdaftar, auth code, access/refresh token
   avatars.js              # Simpan/hapus foto profil
+  totp.js                 # TOTP (RFC 6238) zero-dependency: base32, HOTP, verifikasi drift ±30s
+  mfa.js                  # Data access MFA: enrollment, kode cadangan, challenge login dua langkah
   env.js                  # Loader .env sederhana (zero-dependency)
 public/                  # Halaman & aset statis (dashboard, login, register, mcp-docs, dll)
 data/                    # Database SQLite (dibuat otomatis, tidak masuk git)
@@ -141,7 +147,17 @@ menangani TLS dan meneruskan path terkait (`/mcp`, `/authorize`, `/token`,
 - Password di-hash dengan `scrypt` (bawaan `crypto`, bukan library eksternal).
 - Sesi berbasis cookie `HttpOnly` + `Secure` + `SameSite=Strict`.
 - Login dibatasi rate-limit per IP dan lockout otomatis setelah beberapa kali gagal.
+  IP diambil dari header `X-Real-IP` yang di-set Nginx sendiri (`$remote_addr`,
+  tak bisa dipalsukan client) — bukan dari `X-Forwarded-For` yang bisa disuntik
+  siapa pun untuk melewati rate limit.
+- Token reset password dan kode verifikasi email membatalkan otomatis semua
+  token/kode aktif sebelumnya milik user yang sama tiap kali diminta ulang,
+  supaya cuma yang terbaru yang pernah valid.
 - Token magic-link Telegram sekali pakai dan kedaluwarsa dalam 10 menit.
+- MFA: secret TOTP per user, kode cadangan disimpan sebagai hash (SHA-256).
+  Aktivasi butuh konfirmasi satu kode valid sebelum benar-benar aktif;
+  nonaktivasi butuh password + kode (bukan sekali klik) supaya sesi yang
+  dicuri tidak bisa mematikan 2FA begitu saja.
 - Personal access token MCP disimpan sebagai hash (SHA-256) saja, sama seperti
   session/password, dan hanya ditampilkan satu kali saat dibuat.
 - Token akses OAuth punya masa berlaku 1 jam dengan rotasi refresh token; kode

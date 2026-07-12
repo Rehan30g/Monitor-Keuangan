@@ -31,7 +31,17 @@
         <p id="auth-error" class="error-msg"></p>
         <button type="submit" data-i18n="auth.login.btn">Login</button>
       </form>
-      <p class="auth-alt"><span data-i18n="auth.login.alt">Belum punya akun?</span> <a href="/register" data-i18n="auth.login.altLink">Daftar di sini</a></p>
+      <p class="auth-alt" id="login-alt"><span data-i18n="auth.login.alt">Belum punya akun?</span> <a href="/register" data-i18n="auth.login.altLink">Daftar di sini</a></p>
+
+      <form id="mfa-form" class="auth-form" hidden>
+        <p class="auth-sub" data-i18n="auth.mfa.sub">Masukkan kode 6 digit dari aplikasi authenticator kamu — atau salah satu kode cadangan.</p>
+        <div class="form-group">
+          <label for="mfa-code" data-i18n="auth.mfa.label">Kode verifikasi</label>
+          <input type="text" id="mfa-code" name="code" inputmode="numeric" autocomplete="one-time-code" required>
+        </div>
+        <p id="mfa-error" class="error-msg"></p>
+        <button type="submit" data-i18n="auth.mfa.btn">Verifikasi</button>
+      </form>
     </div>
   </div>
 
