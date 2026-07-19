@@ -3,8 +3,14 @@ import { createRateLimiter } from '../lib/http-utils.js';
 import { createLinkToken, getUserIdByChat, unlinkChat } from '../lib/telegram-links.js';
 import { askFinanceAgent } from '../lib/openrouter.js';
 import { addTransaction, formatRupiah, checkMcpTelegramWriteLimit } from '../lib/transactions.js';
-import { findUserById } from '../lib/auth.js';
+import { accounts } from '../lib/accounts-client.js';
+import db from '../lib/db.js';
 import { tgApi, sendTelegramMessage, fileBase } from '../lib/telegram-api.js';
+
+function getLocalSubscription(userId) {
+  const row = db.prepare(`SELECT subscription FROM users_local WHERE id = ?`).get(userId);
+  return (row && row.subscription) || 'free';
+}
 
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || 'https://huzky.xyz';
 
@@ -150,13 +156,13 @@ async function handleUpdate(update) {
     return sendMessage(chatId, 'Chat ini belum terhubung ke akun huzky.xyz. Ketik /login untuk menghubungkan.');
   }
 
-  const user = findUserById(userId);
-  if (!user) {
+  const userResp = await accounts.get(`/internal/users/${userId}`);
+  if (userResp.status !== 200) {
     unlinkChat(chatId);
     return sendMessage(chatId, 'Akun terkait tidak ditemukan lagi. Ketik /login untuk menghubungkan ulang.');
   }
 
-  const tier = user.subscription || 'free';
+  const tier = getLocalSubscription(userId);
   // Lite sengaja TIDAK dapat akses bot Telegram (lihat kartu plan di dashboard)
   // — hanya Pro/Max. Berlaku juga untuk chat yang sudah pernah tertaut.
   if (tier === 'free' || tier === 'lite') {

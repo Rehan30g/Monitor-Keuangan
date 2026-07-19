@@ -7,7 +7,8 @@ import { mcpAuthRouter } from '@modelcontextprotocol/sdk/server/auth/router.js';
 import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js';
 import { InvalidTokenError, InvalidGrantError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
 import { parseCookies } from '../lib/http-utils.js';
-import { getSession, findUserById } from '../lib/auth.js';
+import { accounts } from '../lib/accounts-client.js';
+import db from '../lib/db.js';
 import { findApiTokenByRaw, touchApiToken } from '../lib/api-tokens.js';
 import { getTransactions, addTransaction, deleteTransaction, getTransactionCountToday, checkMcpTelegramWriteLimit } from '../lib/transactions.js';
 import {
@@ -28,6 +29,11 @@ const HOST = '127.0.0.1'; // sama seperti server.js utama — di belakang Nginx
 const ORIGIN = 'https://huzky.xyz';
 const SESSION_COOKIE = 'sid';
 
+function getLocalSubscription(userId) {
+  const row = db.prepare(`SELECT subscription FROM users_local WHERE id = ?`).get(userId);
+  return (row && row.subscription) || 'free';
+}
+
 // -------------------------------------------------------------------------
 // Provider OAuth 2.1 — dipakai konektor web (mis. Claude.ai) yang cuma minta
 // URL server + opsional Client ID/Secret, tanpa kolom header/token manual.
@@ -36,13 +42,13 @@ const SESSION_COOKIE = 'sid';
 // endpoint /mcp.
 // -------------------------------------------------------------------------
 
-function currentUserFromCookies(req) {
+async function currentUserFromCookies(req) {
   const cookies = parseCookies(req);
   const sessionId = cookies[SESSION_COOKIE];
   if (!sessionId) return null;
-  const session = getSession(sessionId);
-  if (!session) return null;
-  return findUserById(session.userId);
+  const session = await accounts.get(`/internal/sessions/${sessionId}`);
+  if (session.status !== 200) return null;
+  return session.body.user;
 }
 
 // Ikon generik (robot) buat konektor yang bukan Claude — daripada nambah
@@ -204,7 +210,7 @@ const provider = {
   },
 
   async authorize(client, params, res) {
-    const user = currentUserFromCookies(res.req);
+    const user = await currentUserFromCookies(res.req);
     if (!user) {
       const returnTo = res.req.originalUrl;
       res.redirect(`${ORIGIN}/login?returnTo=${encodeURIComponent(returnTo)}`);
@@ -325,8 +331,7 @@ const MCP_BANNED_OUTPUT = {
 };
 
 function getMcpTier(userId) {
-  const user = findUserById(userId);
-  return (user && user.subscription) || 'free';
+  return getLocalSubscription(userId);
 }
 
 // Pairing (koneksi OAuth/token) selalu diizinkan lepas dari plan — hanya
@@ -363,8 +368,7 @@ function buildServerForUser(userId, clientId) {
       'ditolak karena limit harian.',
     inputSchema: {}
   }, async () => {
-    const user = findUserById(userId);
-    const tier = (user && user.subscription) || 'free';
+    const tier = getLocalSubscription(userId);
     const limit = PRICING_PLANS[tier]?.limitTransaksiPerHari ?? null;
     const usedToday = getTransactionCountToday(userId);
     return {
@@ -485,7 +489,7 @@ app.use(mcpAuthRouter({
 }));
 
 app.post('/authorize/decision', express.urlencoded({ extended: false }), async (req, res) => {
-  const user = currentUserFromCookies(req);
+  const user = await currentUserFromCookies(req);
   if (!user) {
     res.redirect(`${ORIGIN}/login`);
     return;

@@ -58,9 +58,11 @@ import {
   handleLogout,
   handleAdminSetSubscription
 } from './lib/handlers.js';
-import { sendJson } from './lib/http-utils.js';
-import { purgeExpiredAccounts, purgeExpiredPendingGoogleSignups } from './lib/auth.js';
+import { sendJson, parseJsonBody } from './lib/http-utils.js';
 import { isGoogleConfigured } from './lib/google-oauth.js';
+import { accounts } from './lib/accounts-client.js';
+import { purgeLocalUserData } from './lib/admin.js';
+import db from './lib/db.js';
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, 'public');
@@ -407,22 +409,60 @@ server.listen(PORT, HOST, () => {
   console.log(`🌐 Server running securely on http://${HOST}:${PORT}`);
 });
 
-// Sweep akun soft-deleted yang melewati masa tenggang 7 hari & hapus permanen.
-function runAccountPurge() {
-  try {
-    const n = purgeExpiredAccounts();
-    if (n > 0) console.log(`🧹 Purged ${n} expired account(s) past the 7-day grace period.`);
-  } catch (err) {
-    console.error('Gagal purge akun kedaluwarsa:', err.message);
+// Sweep akun soft-deleted 7-hari sekarang dijalankan oleh accounts service
+// sendiri (lihat /root/accounts/server.js) — service itu yang memiliki tabel
+// users/deletedAt. Saat accounts service benar-benar purge sebuah akun
+// permanen, ia memanggil balik POST /internal/hooks/user-purged (didaftarkan
+// terpisah di bawah, bukan lewat router utama karena tidak melalui proxy
+// nginx/browser) supaya UangKu bisa membersihkan data lokalnya sendiri —
+// pengganti purgeUserAccount versi lama yang dulu satu proses.
+const INTERNAL_HOOK_KEY = process.env.INTERNAL_API_KEY || '';
+const hookServer = http.createServer(async (req, res) => {
+  if (req.method !== 'POST' || req.url !== '/internal/hooks/user-purged') {
+    return sendJson(res, 404, { error: 'not_found' });
   }
+  if (req.headers['x-internal-key'] !== INTERNAL_HOOK_KEY) {
+    return sendJson(res, 401, { error: 'unauthorized' });
+  }
+  let body;
   try {
-    purgeExpiredPendingGoogleSignups();
-  } catch (err) {
-    console.error('Gagal purge pending Google signup kedaluwarsa:', err.message);
+    body = await parseJsonBody(req, 4096);
+  } catch {
+    return sendJson(res, 400, { error: 'invalid_body' });
+  }
+  if (body.userId) {
+    try {
+      purgeLocalUserData(body.userId);
+    } catch (err) {
+      console.error('Gagal membersihkan data lokal untuk akun yang dipurge:', err.message);
+    }
+  }
+  sendJson(res, 200, { ok: true });
+});
+// Port terpisah, 127.0.0.1-only — dipanggil server-to-server oleh accounts
+// service, tidak pernah lewat nginx/browser (beda port dari PORT utama biar
+// tidak menambah kompleksitas routing whitelist server.js yang sudah ada).
+const HOOK_PORT = 4006;
+hookServer.listen(HOOK_PORT, '127.0.0.1', () => {
+  console.log(`🔗 Purge webhook listener aktif di 127.0.0.1:${HOOK_PORT}`);
+});
+
+// Bootstrap admin: promosikan username di ADMIN_USERNAMES (dipisah koma) jadi
+// role='admin' di users_local setiap startup. Idempoten & self-healing (hanya
+// promosi, tak pernah demosi otomatis). Dulu di db.js (query lokal langsung);
+// sekarang perlu lookup username->id ke accounts service dulu, jadi async.
+async function bootstrapAdmins() {
+  const raw = process.env.ADMIN_USERNAMES || '';
+  const usernames = raw.split(',').map((u) => u.trim().toLowerCase()).filter(Boolean);
+  for (const username of usernames) {
+    try {
+      const r = await accounts.get(`/internal/users/by-username/${encodeURIComponent(username)}`);
+      if (r.status !== 200) continue;
+      db.prepare(`INSERT OR IGNORE INTO users_local (id, role, subscription) VALUES (?, 'user', 'free')`).run(r.body.id);
+      db.prepare(`UPDATE users_local SET role = 'admin' WHERE id = ? AND role != 'admin'`).run(r.body.id);
+    } catch (err) {
+      console.error(`Bootstrap admin gagal untuk ${username}:`, err.message);
+    }
   }
 }
-
-// Jalankan sekali sesaat setelah listen (jangan tunggu satu jam penuh untuk
-// sweep pertama), lalu berulang tiap jam.
-setTimeout(runAccountPurge, 5000).unref();
-setInterval(runAccountPurge, 60 * 60 * 1000).unref();
+bootstrapAdmins();
