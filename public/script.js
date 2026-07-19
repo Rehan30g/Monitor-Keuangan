@@ -201,6 +201,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const navButtons = document.querySelectorAll('.nav-item[data-tab]');
   const FAB_TABS = ['ringkasan', 'transaksi', 'laporan']; // FAB tampil di tab ini saja
   function bukaTab(nama) {
+    // Tab Laporan khusus plan Max — buka modal upgrade, jangan pindah tab.
+    if (nama === 'laporan' && userTier !== 'max') {
+      openSubscriptionModal();
+      return;
+    }
     activeTab = nama;
     document.querySelectorAll('.tab').forEach((sec) => {
       sec.classList.toggle('is-active', sec.id === `tab-${nama}`);
@@ -1217,6 +1222,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let namaTampilan = null; // nama untuk sapaan; cache untuk ganti bahasa
   let usernameChangedAt = null; // timestamp ganti username terakhir (cooldown)
+  let userTier = 'free'; // plan langganan user saat ini — dipakai gating Laporan/ekspor/bahasa
   const USERNAME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
 
   function terapkanSapaan() {
@@ -1229,6 +1235,33 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profil-nama').textContent = namaTampilan;
   }
 
+  // Gating fitur per-tier: Bahasa Indonesia khusus Pro & Max, tab Laporan &
+  // ekspor data khusus Max. Bukan sekadar kosmetik — server sudah menolak
+  // /api/profile/export untuk non-Max; ini cuma supaya UI-nya jujur soal itu
+  // di muka, bukan sesudah gagal.
+  function canUseBahasaIndonesia(tier) {
+    return tier === 'pro' || tier === 'max';
+  }
+
+  function applyTierGates(tier) {
+    if (!canUseBahasaIndonesia(tier) && window.getLang() === 'id') {
+      window.setLang('en');
+    }
+    langButtonsSetDisabled(tier);
+
+    const btnExport = document.getElementById('btn-export-data');
+    if (btnExport) btnExport.classList.toggle('is-locked-feature', tier !== 'max');
+
+    const navLaporan = document.querySelector('.nav-item[data-tab="laporan"]');
+    if (navLaporan) navLaporan.classList.toggle('is-locked-feature', tier !== 'max');
+  }
+
+  function langButtonsSetDisabled(tier) {
+    document.querySelectorAll('[data-lang-choice="id"]').forEach((b) => {
+      b.classList.toggle('is-locked-feature', !canUseBahasaIndonesia(tier));
+    });
+  }
+
   async function checkAuthAndRender() {
     try {
       const response = await fetch('/api/me');
@@ -1236,11 +1269,105 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json();
         namaTampilan = data.displayName || data.username;
         terapkanSapaan();
+
+        // Handle subscription badges
+        const tier = data.subscription || 'free';
+        userTier = tier;
+        applyTierGates(tier);
+        const badges = [
+          document.getElementById('sidebar-sub-badge'),
+          document.getElementById('mobile-sub-badge'),
+          document.getElementById('profile-sub-badge')
+        ];
+        badges.forEach(b => {
+          if (!b) return;
+          if (tier === 'lite') {
+            b.textContent = 'Lite';
+            b.className = 'badge-sub badge-sub-lite';
+            b.style.display = 'inline-block';
+          } else if (tier === 'max') {
+            b.textContent = 'Max';
+            b.className = 'badge-sub badge-sub-max';
+            b.style.display = 'inline-block';
+          } else {
+            b.style.display = 'none';
+          }
+        });
+
+        // Tampilkan/sembunyikan tombol Upgrade di Sidebar & Banner mobile
+        const btnSidebarUpgrade = document.getElementById('btn-sidebar-upgrade');
+        const mobileBanners = document.querySelectorAll('.mobile-upgrade-banner');
+        if (tier === 'max') {
+          if (btnSidebarUpgrade) btnSidebarUpgrade.style.display = 'none';
+          mobileBanners.forEach(banner => banner.style.display = 'none');
+        } else {
+          if (btnSidebarUpgrade) btnSidebarUpgrade.style.display = 'flex';
+          mobileBanners.forEach(banner => banner.style.display = 'flex');
+        }
+
+
+
+        // Terapkan status tombol di modal plan langganan
+        const btnModalLite = document.getElementById('modal-btn-lite');
+        const btnModalPro = document.getElementById('modal-btn-pro');
+        const btnModalMax = document.getElementById('modal-btn-max');
+        const cardModalFree = document.getElementById('modal-plan-free');
+        const cardModalLite = document.getElementById('modal-plan-lite');
+        const cardModalPro = document.getElementById('modal-plan-pro');
+        const cardModalMax = document.getElementById('modal-plan-max');
+
+        if (btnModalLite && btnModalPro && btnModalMax) {
+          [cardModalFree, cardModalLite, cardModalPro, cardModalMax].forEach(c => c && c.classList.remove('active-plan'));
+          if (cardModalFree) cardModalFree.classList.toggle('active-plan', tier === 'free');
+
+          if (tier === 'free') {
+            btnModalLite.textContent = window.t('sub.btnUpgrade');
+            btnModalLite.disabled = false;
+            btnModalPro.textContent = window.t('sub.btnUpgrade');
+            btnModalPro.disabled = false;
+            btnModalMax.textContent = window.t('sub.btnUpgrade');
+            btnModalMax.disabled = false;
+          } else if (tier === 'lite') {
+            if (cardModalLite) cardModalLite.classList.add('active-plan');
+            btnModalLite.textContent = window.t('sub.active');
+            btnModalLite.disabled = true;
+            btnModalPro.textContent = window.t('sub.btnUpgrade');
+            btnModalPro.disabled = false;
+            btnModalMax.textContent = window.t('sub.btnUpgrade');
+            btnModalMax.disabled = false;
+          } else if (tier === 'pro') {
+            if (cardModalPro) cardModalPro.classList.add('active-plan');
+            btnModalLite.textContent = 'Batal';
+            btnModalLite.disabled = true;
+            btnModalPro.textContent = window.t('sub.active');
+            btnModalPro.disabled = true;
+            btnModalMax.textContent = window.t('sub.btnUpgrade');
+            btnModalMax.disabled = false;
+          } else if (tier === 'max') {
+            if (cardModalMax) cardModalMax.classList.add('active-plan');
+            btnModalLite.textContent = 'Batal';
+            btnModalLite.disabled = true;
+            btnModalPro.textContent = 'Batal';
+            btnModalPro.disabled = true;
+            btnModalMax.textContent = window.t('sub.active');
+            btnModalMax.disabled = true;
+          }
+        }
+
+        // Notice (bukan lock) di sub-tab Koneksi: pairing Telegram/MCP boleh utk
+        // semua plan (server tetap izinkan connect), notice ini cuma mengingatkan
+        // bahwa baca/tulis transaksi via Telegram/MCP ditolak sampai Pro/Max.
+        const lockEl = document.getElementById('koneksi-vip-lock');
+        const contentEl = document.getElementById('koneksi-content');
+        if (lockEl) lockEl.hidden = !(tier === 'free' || tier === 'lite');
+        if (contentEl) contentEl.hidden = false;
+
         // Tautan panel admin hanya tampil untuk akun admin. Kontrol akses
         // sebenarnya tetap di server pada tiap /api/admin/* — ini cuma pintasan.
         const adminLink = document.getElementById('nav-admin-link');
         if (adminLink && data.role === 'admin') adminLink.hidden = false;
         document.getElementById('setting-username').textContent = data.username;
+        applyPasswordCards(data.hasPassword);
         usernameChangedAt = data.usernameChangedAt || null;
         if (data.email) tampilkanEmail(data.email);
         document.getElementById('profil-username').textContent = '@' + data.username;
@@ -1511,6 +1638,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Pilih kartu password mana yang tampil: "Ganti password" (akun sudah punya
+  // password) vs "Buat password" (akun Google-only tanpa password). Dipanggil
+  // ulang setelah set-password sukses agar UI berpindah tanpa reload.
+  function applyPasswordCards(hasPassword) {
+    const cardGanti = document.getElementById('card-ganti-password');
+    const cardBuat = document.getElementById('card-buat-password');
+    if (cardGanti) cardGanti.hidden = !hasPassword;
+    if (cardBuat) cardBuat.hidden = !!hasPassword;
+  }
+
+  // Buat password (akun Google-only): kirim ke endpoint set-password, lalu
+  // pindahkan UI ke kartu "Ganti password" tanpa reload.
+  const formSetPassword = document.getElementById('form-set-password');
+  const setPasswordMsg = document.getElementById('set-password-msg');
+  document.getElementById('btn-buat-password').addEventListener('click', () => {
+    formSetPassword.reset();
+    setPasswordMsg.textContent = '';
+    setPasswordMsg.className = 'form-msg';
+    bukaKonfirmasi('cf-set-password');
+  });
+  formSetPassword.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setPasswordMsg.textContent = '';
+    const newPassword = formSetPassword.newPassword.value;
+    const confirmPassword = formSetPassword.confirmPassword.value;
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg.textContent = window.t('msg.pwMismatch');
+      setPasswordMsg.className = 'form-msg is-error';
+      return;
+    }
+    try {
+      const response = await fetch('/api/profile/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword })
+      });
+      const hasil = await response.json();
+      if (!response.ok || hasil.error) {
+        setPasswordMsg.textContent = hasil.error ? window.tServer(hasil.error) : window.t('msg.pwFail');
+        setPasswordMsg.className = 'form-msg is-error';
+        return;
+      }
+      setPasswordMsg.textContent = window.t('msg.setPwSaved');
+      setPasswordMsg.className = 'form-msg is-ok';
+      formSetPassword.reset();
+      applyPasswordCards(true);
+    } catch (err) {
+      console.error('Failed to set password:', err);
+      setPasswordMsg.textContent = window.t('msg.netFail');
+      setPasswordMsg.className = 'form-msg is-error';
+    }
+  });
+
   // Ganti password: form asli sekarang hidup di jendela konfirmasi cf-password
   const formPassword = document.getElementById('form-password');
   const passwordMsg = document.getElementById('password-msg');
@@ -1629,6 +1809,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const exportMsg = document.getElementById('export-msg');
   const btnExportConfirm = document.getElementById('btn-export-confirm');
   document.getElementById('btn-export-data').addEventListener('click', () => {
+    // Ekspor transaksi khusus plan Max — buka modal upgrade, jangan buka konfirmasi.
+    if (userTier !== 'max') {
+      openSubscriptionModal();
+      return;
+    }
     exportMsg.textContent = '';
     bukaKonfirmasi('cf-export');
   });
@@ -1858,7 +2043,16 @@ document.addEventListener('DOMContentLoaded', () => {
   function tandaiLang() {
     langButtons.forEach((b) => b.classList.toggle('is-active', b.dataset.langChoice === window.getLang()));
   }
-  langButtons.forEach((b) => b.addEventListener('click', () => window.setLang(b.dataset.langChoice)));
+  langButtons.forEach((b) => {
+    b.addEventListener('click', () => {
+      // Bahasa Indonesia dikunci khusus plan Pro & Max — lihat applyTierGates().
+      if (b.dataset.langChoice === 'id' && !canUseBahasaIndonesia(userTier)) {
+        openSubscriptionModal();
+        return;
+      }
+      window.setLang(b.dataset.langChoice);
+    });
+  });
   tandaiLang();
 
   window.addEventListener('langchange', () => {
@@ -1869,6 +2063,55 @@ document.addEventListener('DOMContentLoaded', () => {
     renderMfaStatus();
     if (appData) renderAll(appData); // tabel, statistik, chart, nama bulan
   });
+
+  // ------------------------------------------------------------------
+  // Subscription Payment Verification Logic
+  // ------------------------------------------------------------------
+  const btnSidebarUpgrade = document.getElementById('btn-sidebar-upgrade');
+  const btnLockUpgrade = document.getElementById('btn-lock-upgrade');
+
+  const openSubscriptionModal = () => {
+    bukaKonfirmasi('cf-subscription', '#cf-subscription-title');
+  };
+
+  if (btnSidebarUpgrade) btnSidebarUpgrade.addEventListener('click', openSubscriptionModal);
+  if (btnLockUpgrade) btnLockUpgrade.addEventListener('click', openSubscriptionModal);
+  document.querySelectorAll('.btn-mobile-upgrade-trigger').forEach(btn => {
+    btn.addEventListener('click', openSubscriptionModal);
+  });
+
+  // Redirection when plan is chosen in the modal
+  const btnModalLite = document.getElementById('modal-btn-lite');
+  const btnModalPro = document.getElementById('modal-btn-pro');
+  const btnModalMax = document.getElementById('modal-btn-max');
+  const btnSubPlansCancel = document.getElementById('btn-sub-plans-cancel');
+  const btnSubClose = document.getElementById('btn-sub-close');
+
+  if (btnModalLite) {
+    btnModalLite.addEventListener('click', () => {
+      window.location.href = '/payment?plan=lite';
+    });
+  }
+  if (btnModalPro) {
+    btnModalPro.addEventListener('click', () => {
+      window.location.href = '/payment?plan=pro';
+    });
+  }
+  if (btnModalMax) {
+    btnModalMax.addEventListener('click', () => {
+      window.location.href = '/payment?plan=max';
+    });
+  }
+  if (btnSubPlansCancel) {
+    btnSubPlansCancel.addEventListener('click', () => {
+      tutupKonfirmasi();
+    });
+  }
+  if (btnSubClose) {
+    btnSubClose.addEventListener('click', () => {
+      tutupKonfirmasi();
+    });
+  }
 
   checkAuthAndRender();
 });

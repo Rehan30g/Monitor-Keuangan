@@ -40,9 +40,14 @@
         </a><!--ADMIN_NAV_END-->
       </nav>
       <div class="sidebar-footer">
+        <button type="button" id="btn-sidebar-upgrade" class="btn-upgrade-sidebar" style="display: none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span data-i18n="sub.btnUpgrade">Upgrade</span>
+        </button>
         <div class="sidebar-user">
-          <span class="avatar avatar-sm" id="avatar-sidebar"></span>
-          <span id="sidebar-username">&nbsp;</span>
+           <span class="avatar avatar-sm" id="avatar-sidebar"></span>
+           <span id="sidebar-username">&nbsp;</span>
+           <span id="sidebar-sub-badge" class="badge-sub" style="display: none;"></span>
         </div>
         <button id="btn-logout" class="nav-item">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -58,8 +63,8 @@
           UangKu
         </div>
         <div class="mobile-user">
-          <span class="avatar avatar-sm" id="avatar-mobile"></span>
-          <span id="mobile-username"></span>
+           <span class="avatar avatar-sm" id="avatar-mobile"></span>
+           <span id="mobile-username"></span>
         </div>
       </header>
 
@@ -70,6 +75,14 @@
           <div class="page-head">
             <h2 data-i18n="nav.ringkasan">Ringkasan</h2>
             <p id="greeting" data-i18n="greeting.plain">Halo.</p>
+          </div>
+
+          <div class="mobile-upgrade-banner" style="display: none;">
+            <div class="banner-text">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #ffd700; margin-right: 6px; vertical-align: middle;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span data-i18n="sub.bannerText">Upgrade ke Lite / Max untuk fitur AI!</span>
+            </div>
+            <button type="button" class="btn-mobile-upgrade-trigger" data-i18n="sub.btnUpgrade">Upgrade</button>
           </div>
 
           <div class="stat-grid">
@@ -114,6 +127,14 @@
             <p data-i18n="tx.sub">Catat dan kelola pemasukan &amp; pengeluaran.</p>
           </div>
 
+          <div class="mobile-upgrade-banner" style="display: none;">
+            <div class="banner-text">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #ffd700; margin-right: 6px; vertical-align: middle;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span data-i18n="sub.bannerText">Upgrade ke Lite / Max untuk fitur AI!</span>
+            </div>
+            <button type="button" class="btn-mobile-upgrade-trigger" data-i18n="sub.btnUpgrade">Upgrade</button>
+          </div>
+
           <div class="card">
             <div class="tx-toolbar">
               <div class="search-wrap">
@@ -149,6 +170,14 @@
           <div class="page-head">
             <h2 data-i18n="nav.laporan">Laporan</h2>
             <p data-i18n="lap.sub">Rekap bulanan dari riwayat transaksi.</p>
+          </div>
+
+          <div class="mobile-upgrade-banner" style="display: none;">
+            <div class="banner-text">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: #ffd700; margin-right: 6px; vertical-align: middle;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span data-i18n="sub.bannerText">Upgrade ke Lite / Max untuk fitur AI!</span>
+            </div>
+            <button type="button" class="btn-mobile-upgrade-trigger" data-i18n="sub.btnUpgrade">Upgrade</button>
           </div>
 
           <div class="laporan-grid">
@@ -206,10 +235,13 @@
           <div class="card profile-header">
             <div class="profile-hero">
               <span class="avatar avatar-xl" id="avatar-settings"></span>
-              <div class="profile-ident">
-                <div class="profile-nama" id="profil-nama">&ndash;</div>
-                <div class="profile-username" id="profil-username"></div>
-              </div>
+               <div class="profile-ident">
+                 <div class="profile-nama-wrapper" style="display: flex; align-items: center; gap: 8px;">
+                   <div class="profile-nama" id="profil-nama">&ndash;</div>
+                   <span id="profile-sub-badge" class="badge-sub" style="display: none;"></span>
+                 </div>
+                 <div class="profile-username" id="profil-username"></div>
+               </div>
               <div class="profile-actions">
                 <label class="btn-secondary btn-upload" for="avatar-input">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
@@ -234,10 +266,10 @@
 
           <!-- Navigasi sub-tab Pengaturan -->
           <nav class="subtabs" aria-label="Bagian pengaturan" data-i18n-aria="aria.subtabs">
-            <button type="button" class="is-active" data-subtab="akun" data-i18n="set.akun">Akun</button>
-            <button type="button" data-subtab="tampilan" data-i18n="set.tampilan">Tampilan</button>
-            <button type="button" data-subtab="koneksi" data-i18n="set.koneksi">Koneksi</button>
-            <button type="button" data-subtab="tentang" data-i18n="set.tentang">Tentang</button>
+             <button type="button" class="is-active" data-subtab="akun" data-i18n="set.akun">Akun</button>
+             <button type="button" data-subtab="tampilan" data-i18n="set.tampilan">Tampilan</button>
+             <button type="button" data-subtab="koneksi" data-i18n="set.koneksi">Koneksi</button>
+             <button type="button" data-subtab="tentang" data-i18n="set.tentang">Tentang</button>
           </nav>
 
           <!-- Sub-tab: Akun -->
@@ -279,7 +311,7 @@
               </div>
             </div>
 
-            <div class="card">
+            <div class="card" id="card-ganti-password" hidden>
               <div class="card-head"><h3 data-i18n="set.kataSandi">Kata sandi</h3></div>
               <div class="settings-row">
                 <div>
@@ -287,6 +319,17 @@
                   <div class="settings-desc" data-i18n="set.gantiPwDesc">Perbarui password untuk login.</div>
                 </div>
                 <button type="button" id="btn-ganti-password" class="btn-secondary" data-i18n="set.gantiPw">Ganti password</button>
+              </div>
+            </div>
+
+            <div class="card" id="card-buat-password" hidden>
+              <div class="card-head"><h3 data-i18n="set.kataSandi">Kata sandi</h3></div>
+              <div class="settings-row">
+                <div>
+                  <div class="settings-label" data-i18n="set.setPw">Buat password</div>
+                  <div class="settings-desc" data-i18n="set.setPwDesc">Akun ini hanya bisa login lewat Google. Buat password agar bisa juga login dengan password.</div>
+                </div>
+                <button type="button" id="btn-buat-password" class="btn-secondary" data-i18n="set.setPw">Buat password</button>
               </div>
             </div>
 
@@ -366,57 +409,76 @@
 
           <!-- Sub-tab: Koneksi -->
           <div class="subtab-panel" id="subtab-koneksi">
-
-          <div class="card">
-            <div class="card-head"><h3>Telegram</h3></div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label" data-i18n="set.tgBot">Bot Telegram</div>
-                <div class="settings-desc" data-i18n="set.tgDesc">Catat transaksi lewat foto struk atau teks di Telegram.</div>
+            <!-- Notice (bukan lock penuh): pairing Telegram/MCP tetap boleh utk semua
+                 plan, hanya baca/tulis transaksi yang dibatasi Pro/Max di server. -->
+            <div id="koneksi-vip-lock" class="card premium-lock-card" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px;" hidden>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="icon-lock" style="flex-shrink: 0; color: var(--ink-2);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <div style="flex: 1;">
+                <div style="font-weight: 700; margin-bottom: 4px;" data-i18n="sub.lockTitle">Baca/tulis via Telegram & MCP butuh Pro atau Max</div>
+                <p style="color: var(--ink-2); line-height: 1.5; margin: 0;" data-i18n="sub.lockDesc">
+                  Kamu tetap bisa menghubungkan bot Telegram atau membuat token MCP di bawah, tapi permintaan baca/tulis transaksi akan ditolak sampai kamu upgrade ke Pro atau Max.
+                </p>
               </div>
-              <a id="telegram-bot-link" href="https://t.me/" target="_blank" rel="noopener"><button type="button" class="btn-secondary" data-i18n="set.bukaBot">Buka Bot</button></a>
+              <button type="button" class="btn-secondary" id="btn-lock-upgrade" style="flex-shrink: 0;" data-i18n="sub.btnUpgrade">
+                Upgrade
+              </button>
             </div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label" data-i18n="set.statusKoneksi">Status koneksi</div>
-                <div class="settings-desc" id="telegram-status-desc" data-i18n="tg.checking">Memeriksa status&hellip;</div>
+
+            <div id="koneksi-content">
+              <div class="card">
+                <div class="card-head"><h3>Telegram</h3></div>
+                <div class="settings-row">
+                  <div>
+                    <div class="settings-label" data-i18n="set.tgBot">Bot Telegram</div>
+                    <div class="settings-desc" data-i18n="set.tgDesc">Catat transaksi lewat foto struk atau teks di Telegram.</div>
+                  </div>
+                  <a id="telegram-bot-link" href="https://t.me/" target="_blank" rel="noopener"><button type="button" class="btn-secondary" data-i18n="set.bukaBot">Buka Bot</button></a>
+                </div>
+                <div class="settings-row">
+                  <div>
+                    <div class="settings-label" data-i18n="set.statusKoneksi">Status koneksi</div>
+                    <div class="settings-desc" id="telegram-status-desc" data-i18n="tg.checking">Memeriksa status&hellip;</div>
+                  </div>
+                  <button type="button" id="btn-telegram-unlink" class="btn-danger" hidden data-i18n="set.putuskan">Putuskan</button>
+                </div>
               </div>
-              <button type="button" id="btn-telegram-unlink" class="btn-danger" hidden data-i18n="set.putuskan">Putuskan</button>
+
+              <!-- MCP (Model Context Protocol) — akses transaksi untuk aplikasi/agen AI -->
+              <div class="card" id="card-pat">
+                <div class="card-head"><h3 data-i18n="set.patTitle">MCP</h3></div>
+                <p class="settings-desc mcp-intro" data-i18n="set.patDesc">Hubungkan aplikasi atau agen AI yang mendukung MCP (Model Context Protocol) supaya bisa membaca dan mencatat transaksimu.</p>
+                <a href="/mcp-docs" class="mcp-docs-link" data-i18n="set.patDocsLink">Lihat panduan lengkap →</a>
+                <a href="/mcp-skill.md" class="mcp-docs-link" data-i18n="set.patSkillLink">Panduan untuk AI agent (SKILL.md) →</a>
+                <div class="settings-row">
+                  <div>
+                    <div class="settings-label" data-i18n="set.patUrlLabel">URL server MCP</div>
+                  </div>
+                  <div class="settings-inline">
+                    <code class="mcp-url" id="mcp-url">https://huzky.xyz/mcp</code>
+                    <button type="button" class="btn-secondary" id="btn-mcp-url-copy" data-i18n="set.patSalin">Salin</button>
+                  </div>
+                </div>
+                <div class="settings-row">
+                  <div>
+                    <div class="settings-label" data-i18n="set.patLabel">Token akses</div>
+                    <div class="settings-desc" data-i18n="set.patLabelDesc">Setiap aplikasi butuh token sendiri untuk terhubung.</div>
+                  </div>
+                  <button type="button" class="btn-secondary" id="btn-pat-buat" data-i18n="set.patBuat">Buat Token Baru</button>
+                </div>
+                <ul class="pat-list" id="pat-list" hidden></ul>
+                <p class="pat-empty" id="pat-empty" data-i18n="set.patKosong">Belum ada token dibuat.</p>
+                <div class="settings-row">
+                  <div>
+                    <div class="settings-label" data-i18n="set.mcpConnLabel">Aplikasi terhubung</div>
+                    <div class="settings-desc" data-i18n="set.mcpConnDesc">Aplikasi/agen AI yang tersambung lewat OAuth (mis. konektor Claude.ai).</div>
+                  </div>
+                  <button type="button" class="btn-secondary" id="btn-mcp-conn-lihat" data-i18n="set.mcpConnLihat">Lihat aplikasi terhubung</button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- MCP (Model Context Protocol) — akses transaksi untuk aplikasi/agen AI -->
-          <div class="card" id="card-pat">
-            <div class="card-head"><h3 data-i18n="set.patTitle">MCP</h3></div>
-            <p class="settings-desc mcp-intro" data-i18n="set.patDesc">Hubungkan aplikasi atau agen AI yang mendukung MCP (Model Context Protocol) supaya bisa membaca dan mencatat transaksimu.</p>
-            <a href="/mcp-docs" class="mcp-docs-link" data-i18n="set.patDocsLink">Lihat panduan lengkap →</a>
-            <a href="/mcp-skill.md" class="mcp-docs-link" data-i18n="set.patSkillLink">Panduan untuk AI agent (SKILL.md) →</a>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label" data-i18n="set.patUrlLabel">URL server MCP</div>
-              </div>
-              <div class="settings-inline">
-                <code class="mcp-url" id="mcp-url">https://huzky.xyz/mcp</code>
-                <button type="button" class="btn-secondary" id="btn-mcp-url-copy" data-i18n="set.patSalin">Salin</button>
-              </div>
             </div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label" data-i18n="set.patLabel">Token akses</div>
-                <div class="settings-desc" data-i18n="set.patLabelDesc">Setiap aplikasi butuh token sendiri untuk terhubung.</div>
-              </div>
-              <button type="button" class="btn-secondary" id="btn-pat-buat" data-i18n="set.patBuat">Buat Token Baru</button>
-            </div>
-            <ul class="pat-list" id="pat-list" hidden></ul>
-            <p class="pat-empty" id="pat-empty" data-i18n="set.patKosong">Belum ada token dibuat.</p>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label" data-i18n="set.mcpConnLabel">Aplikasi terhubung</div>
-                <div class="settings-desc" data-i18n="set.mcpConnDesc">Aplikasi/agen AI yang tersambung lewat OAuth (mis. konektor Claude.ai).</div>
-              </div>
-              <button type="button" class="btn-secondary" id="btn-mcp-conn-lihat" data-i18n="set.mcpConnLihat">Lihat aplikasi terhubung</button>
-            </div>
-          </div>
           </div>
 
           <!-- Sub-tab: Tentang -->
@@ -476,6 +538,179 @@
         <!-- ===== Jendela konfirmasi melayang (pola visual sama dengan tx-sheet,
              instance terpisah): logout, ekspor, ganti password, ganti email,
              hapus akun ===== -->
+        <!-- ===== Jendela Verifikasi Pembayaran Subscription ===== -->
+        <div class="cf-sheet" id="cf-subscription" role="dialog" aria-modal="true" aria-labelledby="cf-subscription-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-subscription-title" data-i18n="sub.title">Upgrade Plan</h3>
+            <button type="button" class="tx-sheet-close" id="btn-sub-close" aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          
+          <div id="sub-step-plans" class="sub-step-panel">
+            <p class="settings-desc" style="margin-bottom: 20px;" data-i18n="sub.choose">Pilih plan langganan yang sesuai dengan kebutuhan pencatatan keuangan Anda.</p>
+            <div class="plans-grid">
+              <!-- Free Plan (plan default/saat ini bagi yang belum bayar) -->
+              <div class="plan-card" id="modal-plan-free">
+                <div class="plan-name" data-i18n="sub.free">Free</div>
+                <div class="plan-price">Rp 0<span class="plan-period">&nbsp;</span></div>
+                <ul class="plan-features">
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.limitFree">Hanya 1 transaksi per hari</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noTg">Tanpa Integrasi Telegram</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noMcp">Tanpa Integrasi MCP</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noBahasaId">Tanpa Opsi Bahasa Indonesia</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noEkspor">Tanpa Ekspor Transaksi</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noLaporan">Tanpa Akses Tab Laporan</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noPrioritySupport">Tanpa Layanan Prioritas</span>
+                  </li>
+                </ul>
+                <button type="button" class="btn-secondary plan-btn" id="modal-btn-free" disabled data-i18n="sub.active">Aktif</button>
+              </div>
+
+              <!-- Lite Plan -->
+              <div class="plan-card plan-featured-lite" id="modal-plan-lite">
+                <div class="plan-badge-top" data-i18n="sub.popular">Populer</div>
+                <div class="plan-name" data-i18n="sub.lite">Lite</div>
+                <div class="plan-price" style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2;">
+                  <span style="text-decoration: line-through; color: var(--muted); font-size: 0.85rem; font-weight: 500; margin-bottom: 2px;">Rp 50.000</span>
+                  <div>Rp 100.000<span class="plan-period" data-i18n="sub.litePeriod">/3 hari</span></div>
+                </div>
+                <ul class="plan-features">
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.limitLite">Hingga 3 transaksi per hari</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noTg">Tanpa Integrasi Telegram</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noMcp">Tanpa Integrasi MCP</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noBahasaId">Tanpa Opsi Bahasa Indonesia</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noEkspor">Tanpa Ekspor Transaksi</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noLaporan">Tanpa Akses Tab Laporan</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noPrioritySupport">Tanpa Layanan Prioritas</span>
+                  </li>
+                </ul>
+                <button type="button" class="btn-primary plan-btn" id="modal-btn-lite" style="background: var(--accent); color: var(--accent-ink); font-weight: 700; border: none; cursor: pointer;" data-i18n="sub.btnUpgrade">Upgrade</button>
+              </div>
+
+              <!-- Pro Plan -->
+              <div class="plan-card plan-featured-pro" id="modal-plan-pro" style="border: 1px solid var(--accent);">
+                <div class="plan-badge-top" style="background: var(--accent); color: var(--accent-ink);" data-i18n="sub.pro">Pro</div>
+                <div class="plan-name" data-i18n="sub.pro">Pro</div>
+                <div class="plan-price">Rp 5.000.000<span class="plan-period" data-i18n="sub.perMinggu">/minggu</span></div>
+                <ul class="plan-features">
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.limitPro">Hingga 50 transaksi per hari</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.yesTg">Integrasi Bot Telegram</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.yesMcp">Integrasi Server MCP</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.yesBahasaId">Opsi Bahasa Indonesia</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noEkspor">Tanpa Ekspor Transaksi</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noLaporan">Tanpa Akses Tab Laporan</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; vertical-align: middle; margin-right: 6px; flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span style="color: var(--muted);" data-i18n="sub.noPrioritySupport">Tanpa Layanan Prioritas</span>
+                  </li>
+                </ul>
+                <button type="button" class="btn-primary plan-btn" id="modal-btn-pro" style="background: var(--accent); color: var(--accent-ink); font-weight: 700; border: none; cursor: pointer;" data-i18n="sub.btnUpgrade">Upgrade</button>
+              </div>
+              
+              <!-- Max Plan -->
+              <div class="plan-card plan-featured-max" id="modal-plan-max">
+                <div class="plan-badge-top" data-i18n="sub.sultan">Sultan</div>
+                <div class="plan-name" data-i18n="sub.max">Max</div>
+                <div class="plan-price">Rp 1.000.000.000<span class="plan-period" data-i18n="sub.perMinggu">/minggu</span></div>
+                <ul class="plan-features">
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.limitMax">Transaksi Tanpa Batas</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.yesTg">Integrasi Bot Telegram</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.yesMcp">Integrasi Server MCP</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.yesEkspor">Ekspor Transaksi (CSV)</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.yesLaporan">Akses Tab Laporan</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.prioritySupport">Layanan Prioritas 24/7</span>
+                  </li>
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981; vertical-align: middle; margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span data-i18n="sub.yesBahasaId">Opsi Bahasa Indonesia</span>
+                  </li>
+                </ul>
+                <button type="button" class="btn-primary plan-btn" id="modal-btn-max" style="background: #7c3aed; color: #fff; font-weight: 700; border: none; cursor: pointer;" data-i18n="sub.btnUpgrade">Upgrade</button>
+              </div>
+            </div>
+            <div class="cf-actions" style="margin-top: 20px;">
+              <button type="button" class="btn-secondary" id="btn-sub-plans-cancel" data-i18n="sub.btnCancel">Batal</button>
+            </div>
+          </div>
+        </div>
+
+
         <div class="tx-overlay" id="cf-overlay" hidden></div>
 
         <div class="cf-sheet" id="cf-logout" role="dialog" aria-modal="true" aria-labelledby="cf-logout-title" hidden>
@@ -528,6 +763,31 @@
             </div>
           </form>
           <p id="password-msg" class="form-msg" role="status"></p>
+        </div>
+
+        <div class="cf-sheet" id="cf-set-password" role="dialog" aria-modal="true" aria-labelledby="cf-set-password-title" hidden>
+          <div class="tx-sheet-head">
+            <h3 id="cf-set-password-title" data-i18n="set.setPw">Buat password</h3>
+            <button type="button" class="tx-sheet-close" data-cf-close aria-label="Tutup" data-i18n-aria="tx.close">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <form id="form-set-password" class="tx-form">
+            <p class="cf-desc" data-i18n="set.setPwStep">Akun ini saat ini hanya bisa login lewat Google. Setelah membuat password, kamu juga bisa login memakai username dan password.</p>
+            <div class="form-group">
+              <label for="set-new-password" data-i18n="set.pwBaru">Password baru</label>
+              <input type="password" id="set-new-password" name="newPassword" autocomplete="new-password" required minlength="8">
+            </div>
+            <div class="form-group">
+              <label for="set-confirm-password" data-i18n="set.pwKonfirmasi">Konfirmasi password baru</label>
+              <input type="password" id="set-confirm-password" name="confirmPassword" autocomplete="new-password" required minlength="8">
+            </div>
+            <div class="cf-actions">
+              <button type="button" class="btn-secondary" data-cf-close data-i18n="cf.batal">Batal</button>
+              <button type="submit" data-i18n="set.simpan">Simpan</button>
+            </div>
+          </form>
+          <p id="set-password-msg" class="form-msg" role="status"></p>
         </div>
 
         <div class="cf-sheet" id="cf-username" role="dialog" aria-modal="true" aria-labelledby="cf-username-title" hidden>
@@ -637,7 +897,7 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
           </div>
-          <p class="cf-desc cf-desc-warn" data-i18n="set.patRevealWarn">Simpan sekarang — token ini tidak akan ditampilkan lagi setelah ditutup.</p>
+          <p class="cf-desc cf-desc-warn" data-i18n="set.patRevealWarn">Simpan sekarang. Token ini tidak akan ditampilkan lagi setelah ditutup.</p>
           <div class="pat-reveal-box">
             <code id="pat-reveal-value">uk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>
             <button type="button" class="btn-secondary" id="btn-pat-copy" data-i18n="set.patSalin">Salin</button>
@@ -728,7 +988,7 @@
             <code id="mfa-uri-value">otpauth://</code>
             <button type="button" class="btn-secondary" id="btn-mfa-uri-copy" data-i18n="set.patSalin">Salin</button>
           </div>
-          <p class="cf-desc cf-desc-warn" data-i18n="set.mfaBackupWarn">Simpan kode cadangan ini di tempat aman — hanya ditampilkan sekali ini. Tiap kode bisa dipakai sekali untuk masuk jika kamu kehilangan akses ke authenticator.</p>
+          <p class="cf-desc cf-desc-warn" data-i18n="set.mfaBackupWarn">Simpan kode cadangan ini di tempat aman. Kode ini hanya ditampilkan sekali. Tiap kode bisa dipakai sekali untuk masuk jika kamu kehilangan akses ke authenticator.</p>
           <ul class="mfa-backup-list" id="mfa-setup-backup-list"></ul>
           <button type="button" class="btn-secondary mfa-backup-copy-btn" id="btn-mfa-setup-backup-copy" data-i18n="set.mfaSalinKode">Salin semua kode</button>
           <form id="form-mfa-confirm" class="tx-form mfa-confirm-form">
@@ -801,7 +1061,7 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
           </div>
-          <p class="cf-desc cf-desc-warn" data-i18n="set.mfaBackupWarn">Simpan kode cadangan ini di tempat aman — hanya ditampilkan sekali ini. Tiap kode bisa dipakai sekali untuk masuk jika kamu kehilangan akses ke authenticator.</p>
+          <p class="cf-desc cf-desc-warn" data-i18n="set.mfaBackupWarn">Simpan kode cadangan ini di tempat aman. Kode ini hanya ditampilkan sekali. Tiap kode bisa dipakai sekali untuk masuk jika kamu kehilangan akses ke authenticator.</p>
           <ul class="mfa-backup-list" id="mfa-reveal-backup-list"></ul>
           <button type="button" class="btn-secondary mfa-backup-copy-btn" id="btn-mfa-reveal-backup-copy" data-i18n="set.mfaSalinKode">Salin semua kode</button>
           <p id="mfa-backup-copy-msg" class="form-msg" role="status" aria-live="polite"></p>

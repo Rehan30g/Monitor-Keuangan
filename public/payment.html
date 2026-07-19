@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title data-i18n="sub.title">Upgrade Plan - UangKu</title>
+  <script src="theme.js"></script>
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root, html, body {
+      --bg: #f8fafc !important;
+      --surface: #ffffff !important;
+      --surface-2: #f1f5f9 !important;
+      --border: #e2e8f0 !important;
+      --ink: #0f172a !important;
+      --ink-2: #475569 !important;
+      --muted: #94a3b8 !important;
+      --accent: #2a78d6 !important;
+      --accent-hover: #1e5ba3 !important;
+      --accent-ink: #ffffff !important;
+      --hairline: #e2e8f0 !important;
+      color-scheme: light !important;
+    }
+    .stripe-layout {
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: inherit;
+    }
+    .stripe-left {
+      width: 45%;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 60px 40px;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    .stripe-right {
+      width: 55%;
+      padding: 60px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--ink-2);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 30px;
+      transition: color 0.2s ease;
+    }
+    .back-link:hover {
+      color: var(--accent);
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 1.3rem;
+      margin-bottom: 40px;
+      color: var(--ink);
+    }
+    .product-details {
+      margin-bottom: auto;
+      margin-top: 10px;
+    }
+    .product-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--ink-2);
+    }
+    .product-price {
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin: 15px 0;
+      color: var(--ink);
+      display: flex;
+      align-items: baseline;
+    }
+    .product-period {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ink-2);
+      margin-left: 6px;
+    }
+    .product-features-list {
+      list-style: none;
+      padding: 0;
+      margin: 30px 0;
+    }
+    .product-features-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      color: var(--ink-2);
+    }
+    .right-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .right-header h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .lang-select-container select {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 0.85rem;
+      cursor: pointer;
+      outline: none;
+    }
+    .stripe-card-form {
+      max-width: 480px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .payment-instruction-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 25px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+    .payment-instruction-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .payment-instruction-text {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--ink-2);
+    }
+    .stripe-input-group {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      overflow: hidden;
+      margin-bottom: 25px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+    .stripe-input-row {
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .stripe-input-row:last-child {
+      border-bottom: none;
+    }
+    .stripe-input-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--ink-2);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      letter-spacing: 0.03em;
+    }
+    .camera-frame {
+      width: 100%;
+      height: 350px;
+      background: #000;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .camera-frame video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .file-upload-box {
+      border: 2px dashed var(--border);
+      border-radius: 6px;
+      padding: 50px 20px;
+      text-align: center;
+      background: var(--surface-2);
+      cursor: pointer;
+      display: none;
+      box-sizing: border-box;
+      height: 350px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .file-upload-box p {
+      font-size: 0.9rem;
+      color: var(--ink-2);
+      margin: 0 0 10px 0;
+    }
+    .pay-stripe-btn {
+      width: 100%;
+      background: var(--accent);
+      color: var(--accent-ink);
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .pay-stripe-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+    .pay-stripe-btn:disabled {
+      background: var(--muted);
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .stripe-footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .stripe-footer svg {
+      color: var(--muted);
+    }
+    .payment-method-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 25px;
+      margin-top: 10px;
+    }
+    @media (max-width: 520px) {
+      .payment-method-tabs {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+      }
+    }
+    .payment-method-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 6px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--ink-2);
+      transition: all 0.2s ease;
+      gap: 6px;
+    }
+    .payment-method-tab.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: var(--surface-2);
+    }
+    .payment-method-tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+      background: var(--surface);
+    }
+    .plan-selector-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-2);
+      margin-bottom: 6px;
+    }
+    
+    @media (max-width: 900px) {
+      .stripe-layout {
+        flex-direction: column;
+      }
+      .stripe-left {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 20px 20px;
+      }
+      .stripe-left.hidden-mobile-step {
+        display: none !important;
+      }
+      .brand-logo {
+        margin-bottom: 15px;
+      }
+      .product-price {
+        font-size: 2.2rem;
+        margin: 8px 0;
+      }
+      .product-features-list {
+        display: none !important;
+      }
+      .stripe-right {
+        width: 100%;
+        padding: 25px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stripe-layout">
+    <!-- Left Column: UangKu Branding and Plan Details -->
+    <div class="stripe-left">
+      <div>
+        <a href="/dashboard" class="back-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          <span data-i18n="sub.btnBack">Kembali</span>
+        </a>
+        <div class="brand-logo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M16 15h2"/></svg>
+          <span>UangKu Checkout</span>
+        </div>
+      </div>
+      
+      <div class="product-details">
+        <div class="product-name" id="selected-plan-name">Lite Plan</div>
+        <div class="product-price" id="selected-plan-price">
+          <!-- Populated dynamically by JS -->
+        </div>
+        
+        <ul class="product-features-list" id="selected-plan-features">
+          <!-- Populated by JS -->
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Right Column: Verification Views -->
+    <div class="stripe-right">
+      <!-- VIEW 1: Checkout Form (Stripe-like) -->
+      <div id="checkout-form-view" class="stripe-card-form">
+        <div class="right-header">
+          <h2 data-i18n="sub.title">Upgrade Plan</h2>
+          <div class="lang-select-container">
+            <select id="payment-lang-select" aria-label="Pilih bahasa">
+              <option value="id">Indonesia</option>
+              <option value="en">English</option>
+              <option value="zh">中文</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="stripe-input-group" style="display: none;">
+          <div class="stripe-input-row">
+            <div id="checkout-email-display">-</div>
+          </div>
+        </div>
+
+        <div class="plan-selector-label" data-i18n="sub.payMethod">Metode Pembayaran</div>
+        <div class="payment-method-tabs">
+          <div class="payment-method-tab disabled" title="Credit Card">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            <span data-i18n="sub.card">Kartu</span>
+          </div>
+          <div class="payment-method-tab disabled" title="Bank Transfer">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="22" x2="21" y2="22"></line><line x1="6" y1="18" x2="6" y2="11"></line><line x1="10" y1="18" x2="10" y2="11"></line><line x1="14" y1="18" x2="14" y2="11"></line><line x1="18" y1="18" x2="18" y2="11"></line><polygon points="12 2 20 7 4 7"></polygon></svg>
+            <span data-i18n="sub.bank">Bank</span>
+          </div>
+          <div class="payment-method-tab disabled" title="QRIS">
+            <img src="/img/qris-logo.png" alt="QRIS" width="28" height="28" style="object-fit: contain; border-radius: 2px;">
+            <span>QRIS</span>
+          </div>
+          <div class="payment-method-tab active" title="Tunai / Cash">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"/></svg>
+            <span data-i18n="sub.tunai">Tunai</span>
+          </div>
+        </div>
+
+        <div class="stripe-input-group" id="card-inputs-mock" style="opacity: 0.4; pointer-events: none; margin-bottom: 30px;">
+          <div class="stripe-input-row">
+            <div class="stripe-input-label">Card Information</div>
+            <input type="text" placeholder="1234 5678 1234 5678" style="width: 100%; border: none; background: transparent; color: var(--ink); outline: none; font-size: 0.95rem;" disabled>
+          </div>
+          <div style="display: flex;">
+            <div class="stripe-input-row" style="flex: 1; border-right: 1px solid var(--border); box-sizing: border-box;">
+              <input type="text" placeholder="MM / YY" style="width: 100%; border: none; background: transparent; color: var(--ink); outline: none; font-size: 0.95rem;" disabled>
+            </div>
+            <div class="stripe-input-row" style="flex: 1; box-sizing: border-box;">
+              <input type="text" placeholder="CVC" style="width: 100%; border: none; background: transparent; color: var(--ink); outline: none; font-size: 0.95rem;" disabled>
+            </div>
+          </div>
+        </div>
+
+        <div class="pay-btn-container">
+          <button type="button" class="pay-stripe-btn" id="btn-checkout-pay">
+            <span id="btn-checkout-pay-text">Bayar Rp 100.000</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW 2: Instructions View -->
+      <div id="instructions-view" class="stripe-card-form" style="display: none;">
+        <h3 data-i18n="sub.instructionsTitle" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; color: var(--ink);">Instruksi Pembayaran</h3>
+        <div class="payment-instruction-box" style="margin-bottom: 30px;">
+          <div class="payment-instruction-text" id="payment-instructions-detail">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 30px;">
+          <button type="button" class="btn-secondary" id="btn-instr-batal" data-i18n="sub.btnCancel" style="flex: 1; padding: 12px; font-weight: 700; border-radius: 8px;">Batal</button>
+          <button type="button" class="btn-primary" id="btn-instr-lanjut" data-i18n="sub.btnContinue" style="flex: 2; padding: 12px; font-weight: 700; border-radius: 8px; background: var(--accent); color: var(--accent-ink);">Lanjut</button>
+        </div>
+        <p style="text-align: center; margin-top: 14px;">
+          <button type="button" id="btn-instr-upload-instead" data-i18n="sub.uploadInstead" style="background: none; border: none; padding: 0; font-size: 0.8rem; color: var(--ink-2); text-decoration: underline; cursor: pointer;">Kamera bermasalah? Upload foto saja</button>
+        </p>
+      </div>
+
+      <!-- VIEW 3: Camera Capture View -->
+      <div id="camera-view" class="stripe-card-form" style="display: none;">
+        <h3 data-i18n="tx.bukti" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 15px; color: var(--ink);">Bukti Fisik Pembayaran</h3>
+        
+        <div style="position: relative; margin-bottom: 20px;">
+          <!-- Live Camera Stream -->
+          <div class="camera-frame" id="checkout-camera-frame" style="display: block;">
+            <video id="checkout-video" autoplay playsinline></video>
+            <!-- Shutter Button Floating -->
+            <button type="button" id="btn-shutter-capture" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; border-radius: 50%; background: #ffffff; border: 4px solid rgba(0, 0, 0, 0.2); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: transform 0.1s ease;" aria-label="Capture"></button>
+          </div>
+          
+          <!-- File Fallback Upload Box -->
+          <div class="file-upload-box" id="checkout-upload-box">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted); margin-bottom: 12px;" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            <p data-i18n="sub.selectPhoto">Klik untuk memilih foto bukti</p>
+            <input type="file" id="checkout-file-input" accept="image/*" style="display: none;">
+          </div>
+          
+          <canvas id="checkout-canvas" style="display: none;"></canvas>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 25px;">
+          <button type="button" class="btn-secondary" id="btn-camera-kembali" data-i18n="sub.btnBack" style="flex: 1; padding: 12px; font-weight: 700; border-radius: 8px;">Kembali</button>
+          <button type="button" class="btn-primary" id="btn-camera-upload-submit" data-i18n="sub.btnUpload" style="flex: 2; padding: 12px; font-weight: 700; border-radius: 8px; background: var(--accent); color: var(--accent-ink); display: none;">Kirim Foto</button>
+        </div>
+      </div>
+
+      <!-- VIEW 4: Realtime Invoice View -->
+      <div id="invoice-view" class="stripe-card-form" style="display: none;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h3 data-i18n="sub.invoiceTitle" style="font-size: 1.25rem; font-weight: 700; color: var(--ink); margin-bottom: 15px;">Invoice Pembayaran</h3>
+          
+          <!-- Status Badge -->
+          <div id="invoice-status-badge" style="display: inline-block; padding: 8px 16px; border-radius: 30px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 15px;">
+            <span id="invoice-status-text">Memverifikasi...</span>
+          </div>
+
+          <!-- Spinner / Check / Cross Anim -->
+          <div id="invoice-visuals" style="margin: 15px 0; height: 80px; display: flex; align-items: center; justify-content: center;">
+            <!-- Rendered by JS -->
+          </div>
+
+          <p id="invoice-evaluation-log" style="color: var(--ink-2); font-size: 0.85rem; margin-top: 8px;"></p>
+
+        </div>
+
+        <!-- Invoice Details Table -->
+        <div class="card" style="padding: 0; background: var(--surface); border: 1px solid var(--border); overflow: hidden; border-radius: 8px; margin-bottom: 30px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <tbody>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px 16px; font-weight: 700; color: var(--ink-2);">Invoice ID</td>
+                <td style="padding: 12px 16px; text-align: right; font-family: monospace;" id="inv-details-id">INV-1002394</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px 16px; font-weight: 700; color: var(--ink-2);">Plan</td>
+                <td style="padding: 12px 16px; text-align: right;" id="inv-details-plan">Lite</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px 16px; font-weight: 700; color: var(--ink-2);">Amount</td>
+                <td style="padding: 12px 16px; text-align: right; font-weight: 700;" id="inv-details-amount">Rp 100.000</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px 16px; font-weight: 700; color: var(--ink-2);">Method</td>
+                <td style="padding: 12px 16px; text-align: right;" data-i18n="sub.tunai">Tunai / Cash</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px 16px; font-weight: 700; color: var(--ink-2);">Email</td>
+                <td style="padding: 12px 16px; text-align: right;" id="inv-details-email">-</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; font-weight: 700; color: var(--ink-2);">Date</td>
+                <td style="padding: 12px 16px; text-align: right;" id="inv-details-date">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="invoice-action-container">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div>
+        <div class="stripe-footer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>Powered by UangKu AI Vision Secure Verification</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="payment.js"></script>
+</body>
+</html>

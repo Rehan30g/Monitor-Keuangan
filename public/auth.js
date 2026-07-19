@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = params.get('token') || '';
 
     if (!token) {
-      showError('Link reset password tidak valid — token tidak ditemukan.');
+      showError('Link reset password tidak valid: token tidak ditemukan.');
       resetForm.querySelector('button[type="submit"]').disabled = true;
     }
 

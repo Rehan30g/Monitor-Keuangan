@@ -116,20 +116,20 @@
 
     <div class="docs-hero">
       <h1>Panduan MCP</h1>
-      <p>Hubungkan aplikasi atau agen AI apa pun yang mendukung <strong>MCP (Model Context Protocol)</strong> ke akun UangKu-mu, supaya bisa membaca dan mencatat transaksi keuanganmu secara langsung. MCP adalah standar terbuka — dipakai oleh banyak aplikasi AI, bukan cuma satu produk tertentu. Ada dua cara menghubungkan, tergantung jenis aplikasinya.</p>
+      <p>Hubungkan aplikasi atau agen AI apa pun yang mendukung <strong>MCP (Model Context Protocol)</strong> ke akun UangKu-mu, supaya bisa membaca dan mencatat transaksi keuanganmu secara langsung. MCP adalah standar terbuka, dipakai oleh banyak aplikasi AI, bukan cuma satu produk tertentu. Ada dua cara menghubungkan, tergantung jenis aplikasinya.</p>
     </div>
 
     <section class="docs-section">
       <h2><span class="docs-step-num">1</span> Konektor web (mis. Claude.ai)</h2>
       <span class="docs-option-label">Paling mudah</span>
-      <p>Aplikasi yang punya menu "Tambah konektor" berbasis web biasanya cuma minta URL server — tanpa kolom token manual. Untuk ini, cukup:</p>
+      <p>Aplikasi yang punya menu "Tambah konektor" berbasis web biasanya cuma minta URL server, tanpa kolom token manual. Untuk ini, cukup:</p>
       <ol>
         <li>Tempel URL berikut di kolom "URL server MCP" / "Remote MCP server URL":</li>
       </ol>
       <div class="docs-code"><pre><code>https://huzky.xyz/mcp</code></pre><button type="button" class="docs-copy-btn" aria-label="Salin">📋</button></div>
       <ol start="2">
-        <li>Biarkan kolom OAuth Client ID/Secret kosong — server UangKu akan mendaftarkan aplikasi itu secara otomatis.</li>
-        <li>Saat pertama kali dipakai, kamu akan diarahkan untuk login ke UangKu (kalau belum) lalu menyetujui izin akses. Setelah disetujui, koneksi langsung aktif — tidak perlu menyalin token apa pun.</li>
+        <li>Biarkan kolom OAuth Client ID/Secret kosong, server UangKu akan mendaftarkan aplikasi itu secara otomatis.</li>
+        <li>Saat pertama kali dipakai, kamu akan diarahkan untuk login ke UangKu (kalau belum) lalu menyetujui izin akses. Setelah disetujui, koneksi langsung aktif. Tidak perlu menyalin token apa pun.</li>
       </ol>
       <p class="docs-note">Ini memakai OAuth 2.1 standar. Izin ini bisa dicabut kapan saja tanpa memengaruhi token akses milik aplikasi lain.</p>
     </section>
@@ -141,9 +141,9 @@
       <ol>
         <li>Buka <strong>Pengaturan &rarr; Koneksi &rarr; MCP</strong> di dashboard.</li>
         <li>Klik <strong>"Buat Token Baru"</strong>, beri nama supaya gampang dikenali nanti (mis. "Laptop kerja" atau nama aplikasinya).</li>
-        <li>Token akan ditampilkan <strong>satu kali saja</strong> — salin dan simpan sekarang. Token itu tidak bisa dilihat lagi setelah jendelanya ditutup (kalau lupa, tinggal buat token baru).</li>
+        <li>Token akan ditampilkan <strong>satu kali saja</strong>, salin dan simpan sekarang. Token itu tidak bisa dilihat lagi setelah jendelanya ditutup (kalau lupa, tinggal buat token baru).</li>
       </ol>
-      <p class="docs-note">Token ini setara password untuk akun MCP-mu — jangan bagikan ke siapa pun. Bisa dicabut kapan saja dari halaman Pengaturan yang sama.</p>
+      <p class="docs-note">Token ini setara password untuk akun MCP-mu. Jangan bagikan ke siapa pun. Bisa dicabut kapan saja dari halaman Pengaturan yang sama.</p>
       <p>Header autentikasi yang dipakai:</p>
       <div class="docs-code"><pre><code>Authorization: Bearer &lt;token-kamu&gt;</code></pre><button type="button" class="docs-copy-btn" aria-label="Salin">📋</button></div>
       <p>Contoh konfigurasi bergaya <code>mcpServers</code> di file JSON (pola yang dipakai banyak MCP client):</p>
@@ -158,7 +158,7 @@
   }
 }</code></pre><button type="button" class="docs-copy-btn" aria-label="Salin">📋</button></div>
       <p class="docs-note">Kalau aplikasimu tidak memakai format JSON seperti ini, cari kolom "Remote MCP Server URL" atau semacamnya, lalu isi URL di atas dan sertakan header Authorization dengan token-mu.</p>
-      <p>Kalau kamu memakai agen AI yang bisa membaca instruksi sendiri (mis. Claude Code, atau agen berbasis file konfigurasi lain), agen itu bisa memasang koneksi ini sendiri — lihat <a href="/mcp-skill.md">panduan agent (SKILL.md)</a>. Cukup minta agennya membaca file itu, lalu ia akan tahu apa yang perlu ditanyakan kepadamu.</p>
+      <p>Kalau kamu memakai agen AI yang bisa membaca instruksi sendiri (mis. Claude Code, atau agen berbasis file konfigurasi lain), agen itu bisa memasang koneksi ini sendiri, lihat <a href="/mcp-skill.md">panduan agent (SKILL.md)</a>. Cukup minta agennya membaca file itu, lalu ia akan tahu apa yang perlu ditanyakan kepadamu.</p>
     </section>
 
     <section class="docs-section">
@@ -187,7 +187,7 @@
       <h2><span class="docs-step-num">4</span> Keamanan</h2>
       <ul>
         <li>Setiap token atau izin OAuth cuma bisa mengakses data akun pemiliknya sendiri.</li>
-        <li>Cabut token kapan saja dari Pengaturan — aplikasi yang memakainya langsung kehilangan akses.</li>
+        <li>Cabut token kapan saja dari Pengaturan, aplikasi yang memakainya langsung kehilangan akses.</li>
         <li>Buat token terpisah untuk tiap aplikasi, supaya kalau satu perlu dicabut, yang lain tidak ikut terganggu.</li>
       </ul>
     </section>

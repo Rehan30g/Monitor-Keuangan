@@ -2,7 +2,7 @@ import '../lib/env.js';
 import { createRateLimiter } from '../lib/http-utils.js';
 import { createLinkToken, getUserIdByChat, unlinkChat } from '../lib/telegram-links.js';
 import { askFinanceAgent } from '../lib/openrouter.js';
-import { addTransaction, formatRupiah } from '../lib/transactions.js';
+import { addTransaction, formatRupiah, checkMcpTelegramWriteLimit } from '../lib/transactions.js';
 import { findUserById } from '../lib/auth.js';
 import { tgApi, sendTelegramMessage, fileBase } from '../lib/telegram-api.js';
 
@@ -70,7 +70,7 @@ async function handleLogin(chatId) {
   );
 }
 
-async function handleFinanceMessage(chatId, userId, messageId, { text, imageBase64, imageMime }) {
+async function handleFinanceMessage(chatId, userId, tier, messageId, { text, imageBase64, imageMime }) {
   // Feedback instan supaya user tahu AI sedang memproses: reaksi 👀 di pesannya
   // + status "mengetik" yang terus di-refresh selama proses berjalan.
   setReaction(chatId, messageId, '👀');
@@ -95,6 +95,11 @@ async function handleFinanceMessage(chatId, userId, messageId, { text, imageBase
   const failed = [];
 
   for (const call of result.toolCalls) {
+    const writeLimit = checkMcpTelegramWriteLimit(userId, tier);
+    if (!writeLimit.allowed) {
+      failed.push(`${call.keterangan}: ${writeLimit.error}`);
+      break; // limit gabungan MCP+Telegram — sisa item di batch ini pasti kena juga
+    }
     const outcome = addTransaction(userId, call.jenis, call.keterangan, call.jumlah, { sessionLabel: 'telegram:' + chatId });
     if (outcome.error) {
       failed.push(`${call.keterangan}: ${outcome.error}`);
@@ -151,6 +156,13 @@ async function handleUpdate(update) {
     return sendMessage(chatId, 'Akun terkait tidak ditemukan lagi. Ketik /login untuk menghubungkan ulang.');
   }
 
+  const tier = user.subscription || 'free';
+  // Lite sengaja TIDAK dapat akses bot Telegram (lihat kartu plan di dashboard)
+  // — hanya Pro/Max. Berlaku juga untuk chat yang sudah pernah tertaut.
+  if (tier === 'free' || tier === 'lite') {
+    return sendMessage(chatId, '⚠️ Bot Telegram ini adalah fitur eksklusif untuk pelanggan Pro atau Max. Silakan lakukan upgrade terlebih dahulu di website UangKu.');
+  }
+
   let payload;
 
   if (message.photo && message.photo.length > 0) {
@@ -176,7 +188,7 @@ async function handleUpdate(update) {
   return queueForChat(chatId, async () => {
     chatBusy.add(chatId);
     try {
-      await handleFinanceMessage(chatId, userId, messageId, payload);
+      await handleFinanceMessage(chatId, userId, tier, messageId, payload);
     } finally {
       chatBusy.delete(chatId);
     }

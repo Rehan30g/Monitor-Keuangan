@@ -13,8 +13,8 @@ import {
   handleGoogleAuthStart,
   handleGoogleCallback,
   handleGoogleCompleteSignup,
-  handleLogout,
   handleMe,
+  handleVerifySubscriptionPayment,
   handleGetTransactions,
   handleCreateTransaction,
   handleDeleteTransaction,
@@ -27,6 +27,7 @@ import {
   handleDeleteAvatar,
   handleGetAvatar,
   handleChangePassword,
+  handleSetPassword,
   handleForgotPassword,
   handleResetPassword,
   handleExportData,
@@ -53,7 +54,9 @@ import {
   handleAdminListTxSessions,
   handleAdminPreviewRollback,
   handleAdminRollback,
-  handleDashboardPage
+  handleDashboardPage,
+  handleLogout,
+  handleAdminSetSubscription
 } from './lib/handlers.js';
 import { sendJson } from './lib/http-utils.js';
 import { purgeExpiredAccounts, purgeExpiredPendingGoogleSignups } from './lib/auth.js';
@@ -96,6 +99,7 @@ const AUTH_POST_ROUTES = new Set([
   '/api/profile/avatar',
   '/api/profile/avatar/delete',
   '/api/profile/password',
+  '/api/profile/set-password',
   '/api/forgot-password',
   '/api/reset-password',
   '/api/profile/export',
@@ -106,7 +110,8 @@ const AUTH_POST_ROUTES = new Set([
   '/api/mfa/enable/start',
   '/api/mfa/enable/confirm',
   '/api/mfa/disable',
-  '/api/mfa/backup-codes'
+  '/api/mfa/backup-codes',
+  '/api/subscription/verify-payment'
 ]);
 
 // /api/tokens/<id>/revoke — id dinamis, tak bisa masuk Set exact-match di atas.
@@ -122,6 +127,7 @@ const ADMIN_RESTORE_RE = /^\/api\/admin\/users\/([^/]+)\/restore$/;
 const ADMIN_TX_SESSIONS_RE = /^\/api\/admin\/users\/([^/]+)\/tx-sessions$/;
 const ADMIN_TX_ROLLBACK_PREVIEW_RE = /^\/api\/admin\/users\/([^/]+)\/tx-rollback\/preview$/;
 const ADMIN_TX_ROLLBACK_RE = /^\/api\/admin\/users\/([^/]+)\/tx-rollback$/;
+const ADMIN_SET_SUBSCRIPTION_RE = /^\/api\/admin\/users\/([^/]+)\/subscription$/;
 
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -130,7 +136,7 @@ const server = http.createServer(async (req, res) => {
   const isAllowedMethod =
     req.method === 'GET' ||
     req.method === 'HEAD' ||
-    (req.method === 'POST' && (AUTH_POST_ROUTES.has(pathname) || REVOKE_TOKEN_RE.test(pathname) || REVOKE_MCP_CONNECTION_RE.test(pathname) || ADMIN_RESET_PW_RE.test(pathname) || ADMIN_SET_ROLE_RE.test(pathname) || ADMIN_RESET_USERNAME_CD_RE.test(pathname) || ADMIN_RESTORE_RE.test(pathname) || ADMIN_TX_ROLLBACK_PREVIEW_RE.test(pathname) || ADMIN_TX_ROLLBACK_RE.test(pathname)));
+    (req.method === 'POST' && (AUTH_POST_ROUTES.has(pathname) || REVOKE_TOKEN_RE.test(pathname) || REVOKE_MCP_CONNECTION_RE.test(pathname) || ADMIN_RESET_PW_RE.test(pathname) || ADMIN_SET_ROLE_RE.test(pathname) || ADMIN_RESET_USERNAME_CD_RE.test(pathname) || ADMIN_RESTORE_RE.test(pathname) || ADMIN_TX_ROLLBACK_PREVIEW_RE.test(pathname) || ADMIN_TX_ROLLBACK_RE.test(pathname) || ADMIN_SET_SUBSCRIPTION_RE.test(pathname)));
 
   if (!isAllowedMethod) {
     res.writeHead(405, { 'Content-Type': 'text/plain' });
@@ -200,6 +206,9 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/me' && req.method === 'GET') {
     return handleMe(req, res);
   }
+  if (pathname === '/api/subscription/verify-payment' && req.method === 'POST') {
+    return handleVerifySubscriptionPayment(req, res);
+  }
   if (pathname === '/api/transactions' && req.method === 'GET') {
     return handleGetTransactions(req, res);
   }
@@ -232,6 +241,9 @@ const server = http.createServer(async (req, res) => {
   }
   if (pathname === '/api/profile/password' && req.method === 'POST') {
     return handleChangePassword(req, res);
+  }
+  if (pathname === '/api/profile/set-password' && req.method === 'POST') {
+    return handleSetPassword(req, res);
   }
   if (pathname === '/api/forgot-password' && req.method === 'POST') {
     return handleForgotPassword(req, res);
@@ -297,6 +309,9 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === 'POST' && ADMIN_SET_ROLE_RE.test(pathname)) {
     return handleAdminSetRole(req, res, pathname.match(ADMIN_SET_ROLE_RE)[1]);
+  }
+  if (req.method === 'POST' && ADMIN_SET_SUBSCRIPTION_RE.test(pathname)) {
+    return handleAdminSetSubscription(req, res, pathname.match(ADMIN_SET_SUBSCRIPTION_RE)[1]);
   }
   if (req.method === 'POST' && ADMIN_RESET_USERNAME_CD_RE.test(pathname)) {
     return handleAdminResetUsernameCooldown(req, res, pathname.match(ADMIN_RESET_USERNAME_CD_RE)[1]);
@@ -366,7 +381,8 @@ const server = http.createServer(async (req, res) => {
 
     res.writeHead(200, {
       'Content-Type': contentType,
-      'Content-Length': stats.size
+      'Content-Length': stats.size,
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
     });
 
     // Read and pipe stream

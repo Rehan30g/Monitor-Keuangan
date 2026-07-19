@@ -67,9 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Util
   // ------------------------------------------------------------------
   function fmtDate(val) {
-    if (!val) return '—';
+    if (!val) return '-';
     const d = new Date(val);
-    if (isNaN(d.getTime())) return '—';
+    if (isNaN(d.getTime())) return '-';
     const lang = window.getLang ? window.getLang() : 'id';
     const locale = lang === 'zh' ? 'zh-CN' : lang === 'en' ? 'en-US' : 'id-ID';
     return d.toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
@@ -254,20 +254,21 @@ document.addEventListener('DOMContentLoaded', () => {
     sul.appendChild(el('li', { text: t('admin.thRole') + ': ' + (detail.role === 'admin' ? t('admin.roleAdmin') : t('admin.roleUser')) }));
     sul.appendChild(el('li', { text: t('admin.thVerified') + ': ' + (detail.emailVerified ? t('admin.yes') : t('admin.no')) }));
     sul.appendChild(el('li', { text: t('admin.thMfa') + ': ' + (detail.mfaEnabled ? t('admin.yes') : t('admin.no')) }));
+    sul.appendChild(el('li', { text: 'Plan: ' + (detail.subscription ? detail.subscription.toUpperCase() : 'FREE') }));
     sul.appendChild(el('li', { text: t('admin.thCreated') + ': ' + fmtDate(detail.createdAt) }));
     if (detail.deleted) sul.appendChild(el('li', { text: t('admin.deleted') }));
     summary.appendChild(sul);
     body.appendChild(summary);
 
     body.appendChild(historyBlock('admin.emailHistory', detail.emailHistory,
-      (h) => fmtDate(h.changedAt) + ' — ' + h.oldEmail));
+      (h) => fmtDate(h.changedAt) + ' · ' + h.oldEmail));
     body.appendChild(historyBlock('admin.passwordLog', detail.passwordChanges,
-      (p) => fmtDate(p.changedAt) + ' — ' + pwViaLabel(p.changedVia)));
+      (p) => fmtDate(p.changedAt) + ' · ' + pwViaLabel(p.changedVia)));
     body.appendChild(historyBlock('admin.loginHistory', detail.loginHistory,
-      (l) => fmtDate(l.occurredAt) + ' — ' + (l.success ? t('admin.loginOk') : t('admin.loginFail')) +
-        (l.ip ? ' — ' + l.ip : '')));
+      (l) => fmtDate(l.occurredAt) + ' · ' + (l.success ? t('admin.loginOk') : t('admin.loginFail')) +
+        (l.ip ? ' · ' + l.ip : '')));
     body.appendChild(historyBlock('admin.connectedApps', detail.connectedApps,
-      (a) => (a.clientName || a.clientId) + ' — ' + fmtDate(a.connectedSince)));
+      (a) => (a.clientName || a.clientId) + ' · ' + fmtDate(a.connectedSince)));
 
     // Tombol role menyesuaikan status saat ini
     const roleBtn = document.getElementById('btn-detail-role');
@@ -542,6 +543,41 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       msgEl.className = 'form-msg is-error';
       msgEl.textContent = t('admin.actionFail');
+    }
+  });
+
+  // ------------------------------------------------------------------
+  // Aksi: ubah subscription plan
+  // ------------------------------------------------------------------
+  document.getElementById('btn-detail-subscription').addEventListener('click', async () => {
+    if (!selectedUser) return;
+    const plans = ['free', 'lite', 'pro', 'max'];
+    const current = selectedUser.subscription || 'free';
+    const choice = prompt('Set subscription plan for @' + selectedUser.username + ' (free, lite, pro, max):', current);
+    if (choice === null) return;
+    const plan = choice.toLowerCase().trim();
+    if (!plans.includes(plan)) {
+      alert('Plan tidak valid! Pilih free, lite, pro, atau max.');
+      return;
+    }
+    
+    try {
+      const res = await fetch('/api/admin/users/' + encodeURIComponent(selectedUser.id) + '/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: plan }),
+        credentials: 'same-origin'
+      });
+      if (res.ok) {
+        alert('Plan untuk @' + selectedUser.username + ' berhasil diubah menjadi ' + plan.toUpperCase() + '!');
+        tutupKonfirmasi();
+        loadUsers();
+      } else {
+        alert('Gagal mengubah plan.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Terjadi kesalahan koneksi.');
     }
   });
 

@@ -9,7 +9,7 @@ import { InvalidTokenError, InvalidGrantError } from '@modelcontextprotocol/sdk/
 import { parseCookies } from '../lib/http-utils.js';
 import { getSession, findUserById } from '../lib/auth.js';
 import { findApiTokenByRaw, touchApiToken } from '../lib/api-tokens.js';
-import { getTransactions, addTransaction, deleteTransaction } from '../lib/transactions.js';
+import { getTransactions, addTransaction, deleteTransaction, getTransactionCountToday, checkMcpTelegramWriteLimit } from '../lib/transactions.js';
 import {
   getOAuthClient,
   registerOAuthClient,
@@ -304,6 +304,39 @@ const provider = {
 
 const PAGE_SIZE = 10;
 
+// Sumber tunggal info harga/limit plan, dipakai tool get_pricing_plans di
+// bawah — angka ini harus tetap sinkron dengan kartu plan di dashboard.html
+// dan batas harian di lib/transactions.js (addTransaction).
+const PRICING_PLANS = {
+  free: { nama: 'Free', hargaRupiah: 0, periode: null, limitTransaksiPerHari: 1, telegram: false, mcp: false },
+  lite: { nama: 'Lite', hargaRupiah: 100000, periode: '3 hari', limitTransaksiPerHari: 3, telegram: false, mcp: false },
+  pro: { nama: 'Pro', hargaRupiah: 5000000, periode: 'minggu', limitTransaksiPerHari: 50, telegram: true, mcp: true, limitTulisMcpTelegramPerHari: 3 },
+  max: { nama: 'Max', hargaRupiah: 1000000000, periode: 'minggu', limitTransaksiPerHari: null, telegram: true, mcp: true }
+};
+
+const MCP_BANNED_OUTPUT = {
+  content: [{
+    type: 'text',
+    text: 'Output banned: baca/tulis transaksi via MCP memerlukan langganan Pro atau Max. ' +
+      'Akun ini masih boleh terhubung (pairing) — pakai get_pricing_plans untuk cek plan & harga, ' +
+      'atau upgrade dulu di dashboard UangKu untuk membuka akses baca/tulis.'
+  }],
+  isError: true
+};
+
+function getMcpTier(userId) {
+  const user = findUserById(userId);
+  return (user && user.subscription) || 'free';
+}
+
+// Pairing (koneksi OAuth/token) selalu diizinkan lepas dari plan — hanya
+// baca/tulis transaksi (list/add/delete) yang dibatasi Pro/Max. get_pricing_plans
+// juga selalu terbuka supaya user Free/Lite tetap bisa cek harga lewat AI-nya.
+function canReadWriteMcp(userId) {
+  const tier = getMcpTier(userId);
+  return tier === 'pro' || tier === 'max';
+}
+
 function buildServerForUser(userId, clientId) {
   const sessionLabel = 'mcp:' + (clientId || 'unknown');
   const server = new McpServer(
@@ -321,6 +354,33 @@ function buildServerForUser(userId, clientId) {
     }
   );
 
+  server.registerTool('get_pricing_plans', {
+    title: 'Info Harga Plan Langganan',
+    description:
+      'Lihat daftar plan langganan UangKu (Free/Lite/Pro/Max) beserta harga, periode, limit transaksi ' +
+      'harian, dan fitur (Telegram/MCP) masing-masing, plus plan & sisa kuota transaksi hari ini milik ' +
+      'pengguna saat ini. Berguna kalau pengguna bertanya soal harga, upgrade, atau kenapa transaksinya ' +
+      'ditolak karena limit harian.',
+    inputSchema: {}
+  }, async () => {
+    const user = findUserById(userId);
+    const tier = (user && user.subscription) || 'free';
+    const limit = PRICING_PLANS[tier]?.limitTransaksiPerHari ?? null;
+    const usedToday = getTransactionCountToday(userId);
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          plans: PRICING_PLANS,
+          planSaatIni: tier,
+          transaksiHariIni: usedToday,
+          limitTransaksiHariIni: limit,
+          sisaKuotaHariIni: limit === null ? null : Math.max(0, limit - usedToday)
+        }, null, 2)
+      }]
+    };
+  });
+
   server.registerTool('list_transactions', {
     title: 'Daftar Transaksi',
     description:
@@ -334,6 +394,7 @@ function buildServerForUser(userId, clientId) {
       page: z.number().int().positive().optional().describe(`Nomor halaman, dimulai dari 1 (${PAGE_SIZE} transaksi terbaru per halaman). Default 1.`)
     }
   }, async ({ jenis, cari, page }) => {
+    if (!canReadWriteMcp(userId)) return MCP_BANNED_OUTPUT;
     const data = getTransactions(userId);
     let rows = data.transaksi;
     if (jenis) rows = rows.filter((t) => t.jenis === jenis);
@@ -369,6 +430,9 @@ function buildServerForUser(userId, clientId) {
       jumlah: z.number().int().positive().describe('Nominal transaksi dalam Rupiah, bilangan bulat positif')
     }
   }, async ({ jenis, keterangan, jumlah }) => {
+    if (!canReadWriteMcp(userId)) return MCP_BANNED_OUTPUT;
+    const writeLimit = checkMcpTelegramWriteLimit(userId, getMcpTier(userId));
+    if (!writeLimit.allowed) return { content: [{ type: 'text', text: writeLimit.error }], isError: true };
     const result = addTransaction(userId, jenis, keterangan, String(jumlah), { sessionLabel });
     if (result.error) return { content: [{ type: 'text', text: `Gagal: ${result.error}` }], isError: true };
     const transaksiBaru = result.transaksi[0]; // baris terbaru — hasil query terurut id DESC
@@ -388,6 +452,9 @@ function buildServerForUser(userId, clientId) {
       'jangan panggil list_transactions sesudahnya kecuali pengguna minta melihat daftar.',
     inputSchema: { id: z.number().int().describe('ID transaksi yang akan dihapus') }
   }, async ({ id }) => {
+    if (!canReadWriteMcp(userId)) return MCP_BANNED_OUTPUT;
+    const writeLimit = checkMcpTelegramWriteLimit(userId, getMcpTier(userId));
+    if (!writeLimit.allowed) return { content: [{ type: 'text', text: writeLimit.error }], isError: true };
     const result = deleteTransaction(userId, id, { sessionLabel });
     if (result.error) return { content: [{ type: 'text', text: `Gagal: ${result.error}` }], isError: true };
     return {
@@ -458,6 +525,7 @@ const bearerAuth = requireBearerAuth({
 
 app.all('/mcp', express.json(), bearerAuth, async (req, res) => {
   const userId = req.auth.extra.userId;
+
   try {
     const server = buildServerForUser(userId, req.auth.clientId);
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
